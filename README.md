@@ -102,8 +102,8 @@ DB_DATABASE=cosmeticspro      # ← Tên database của bạn
 DB_USERNAME=root               # ← Username MySQL
 DB_PASSWORD=                   # ← Password MySQL (để trống nếu dùng Laragon mặc định)
 
-FRONTEND_URL=http://localhost:5173
-SANCTUM_STATEFUL_DOMAINS=localhost:5173
+FRONTEND_URL=http://localhost:5174
+SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:5174
 ```
 
 #### 2.4. Tạo database
@@ -170,7 +170,7 @@ VITE_API_URL=http://localhost:8000/api
 npm run dev
 ```
 
-✅ Frontend chạy tại: **http://localhost:5173**
+✅ Frontend chạy tại: **http://localhost:5174**
 
 ---
 
@@ -194,8 +194,8 @@ npm run dev
 
 | URL | Mô tả |
 |-----|-------|
-| http://localhost:5173 | 🛍️ Trang bán hàng (người dùng) |
-| http://localhost:5173/admin | 🔧 Trang quản trị admin |
+| http://localhost:5174 | 🛍️ Trang bán hàng (người dùng) |
+| http://localhost:5174/admin | 🔧 Trang quản trị admin |
 | http://localhost:8000/api | 📡 Laravel API |
 | http://localhost:8000/up | 💚 Health check |
 
@@ -217,6 +217,13 @@ Authorization: Bearer {token}
 ```
 
 > Xem chi tiết các API endpoint trong file [`backend/routes/api.php`](./backend/routes/api.php)
+
+### Test Bằng Postman
+
+Dự án có sẵn file **Postman Collection** để bạn test API dễ dàng:
+1. Mở Postman
+2. Import file `CosmeticsPro_API.postman_collection.json` (nằm ở thư mục gốc của dự án)
+3. Chạy API `Login` thành công, token sẽ tự động được lưu vào biến `{{token}}` để dùng cho các request cần xác thực.
 
 ---
 

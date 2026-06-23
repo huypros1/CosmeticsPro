@@ -1,33 +1,27 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const MainLayout = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { fetchCart } = useCart();
+
+  useEffect(() => {
+    if (user) {
+      fetchCart();
+    }
+  }, [user, fetchCart]);
 
   return (
     <div className="main-layout">
-      <header>
-        <nav>
-          <Link to="/">CosmeticsPro</Link>
-          <div>
-            <Link to="/products">Sản phẩm</Link>
-            {user ? (
-              <>
-                <Link to="/cart">Giỏ hàng</Link>
-                <button onClick={logout}>Đăng xuất</button>
-              </>
-            ) : (
-              <Link to="/login">Đăng nhập</Link>
-            )}
-          </div>
-        </nav>
-      </header>
-      <main>
+      <Navbar />
+      <main className="main-layout__content">
         <Outlet />
       </main>
-      <footer>
-        <p>&copy; {new Date().getFullYear()} CosmeticsPro</p>
-      </footer>
+      <Footer />
     </div>
   );
 };
