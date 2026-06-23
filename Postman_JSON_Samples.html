@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HQCosmetic - Mẫu JSON API Postman</title>
+    <style>
+        :root {
+            --primary: #cba26c; /* Rose gold / gold */
+            --bg: #f9f9f9;
+            --text: #333;
+            --code-bg: #2d2d2d;
+            --code-text: #f8f8f2;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 40px;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .method {
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            background-color: #fca130; /* POST */
+        }
+        .method.put { background-color: #097bed; }
+        .endpoint {
+            font-family: monospace;
+            font-size: 16px;
+            color: #d63384;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .card-header {
+            background: #f1f1f1;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+        }
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 15px;
+            margin: 0;
+            overflow-x: auto;
+            font-size: 14px;
+            font-family: "Consolas", "Courier New", monospace;
+        }
+        .copy-btn {
+            float: right;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover { background: #b08d5c; }
+        .description {
+            padding: 0 15px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💄 HQCosmetic - Mẫu JSON Gửi API</h1>
+    <p style="text-align: center;">Tài liệu tổng hợp các mẫu JSON payload để bạn copy nhanh vào Body (raw -> JSON) trên Postman.</p>
+
+    <!-- 1. AUTH -->
+    <h2><span class="method">POST</span> <span class="endpoint">/api/auth/register</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Đăng ký tài khoản
+            <button class="copy-btn" onclick="copyCode('code-register')">Copy</button>
+        </div>
+        <p class="description">Đăng ký thành viên mới.</p>
+        <pre id="code-register">{
+  "name": "Nguyễn Văn A",
+  "email": "nguyenvana@gmail.com",
+  "password": "password123",
+  "password_confirmation": "password123"
+}</pre>
+    </div>
+
+    <h2><span class="method">POST</span> <span class="endpoint">/api/auth/login</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Đăng nhập
+            <button class="copy-btn" onclick="copyCode('code-login')">Copy</button>
+        </div>
+        <pre id="code-login">{
+  "email": "admin@hqcosmetic.vn",
+  "password": "password"
+}</pre>
+    </div>
+
+    <!-- 2. ADDRESS -->
+    <h2><span class="method">POST</span> <span class="endpoint">/api/profile/addresses</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Thêm địa chỉ giao hàng
+            <button class="copy-btn" onclick="copyCode('code-address')">Copy</button>
+        </div>
+        <p class="description">Header: <code>Authorization: Bearer {token}</code></p>
+        <pre id="code-address">{
+  "address_line": "123 Đường Lê Lợi, Phường Bến Thành, Quận 1, TP.HCM",
+  "phone": "0901234567",
+  "is_default": true
+}</pre>
+    </div>
+
+    <!-- 3. CART -->
+    <h2><span class="method">POST</span> <span class="endpoint">/api/cart</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Thêm vào giỏ hàng
+            <button class="copy-btn" onclick="copyCode('code-cart-add')">Copy</button>
+        </div>
+        <p class="description">Header: <code>Authorization: Bearer {token}</code></p>
+        <pre id="code-cart-add">{
+  "variant_id": 1,
+  "quantity": 2
+}</pre>
+    </div>
+
+    <h2><span class="method put">PUT</span> <span class="endpoint">/api/cart/{cart_id}</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Cập nhật số lượng giỏ hàng
+            <button class="copy-btn" onclick="copyCode('code-cart-update')">Copy</button>
+        </div>
+        <pre id="code-cart-update">{
+  "quantity": 5
+}</pre>
+    </div>
+
+    <!-- 4. ORDERS -->
+    <h2><span class="method">POST</span> <span class="endpoint">/api/orders</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Tạo đơn hàng (Checkout)
+            <button class="copy-btn" onclick="copyCode('code-order')">Copy</button>
+        </div>
+        <p class="description">Header: <code>Authorization: Bearer {token}</code>. Thay <code>shipping_address_id</code> bằng id hợp lệ của user.</p>
+        <pre id="code-order">{
+  "shipping_address_id": 1,
+  "voucher_id": null,
+  "payment_method": "cod",
+  "shipping_fee": 30000,
+  "total_amount": 425000,
+  "items": [
+    {
+      "variant_id": 1,
+      "quantity": 1,
+      "price": 395000
+    }
+  ]
+}</pre>
+    </div>
+
+    <!-- 5. REVIEWS -->
+    <h2><span class="method">POST</span> <span class="endpoint">/api/products/{id}/reviews</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Đánh giá sản phẩm
+            <button class="copy-btn" onclick="copyCode('code-review')">Copy</button>
+        </div>
+        <p class="description">Header: <code>Authorization: Bearer {token}</code></p>
+        <pre id="code-review">{
+  "rating": 5,
+  "comment": "Sản phẩm xài rất mướt, giao hàng nhanh, đóng gói cẩn thận. Rất ưng ý!"
+}</pre>
+    </div>
+
+    <!-- 6. VOUCHERS -->
+    <h2><span class="method">POST</span> <span class="endpoint">/api/vouchers/validate</span></h2>
+    <div class="card">
+        <div class="card-header">
+            Kiểm tra Voucher
+            <button class="copy-btn" onclick="copyCode('code-voucher')">Copy</button>
+        </div>
+        <pre id="code-voucher">{
+  "code": "WELCOME10",
+  "order_value": 500000
+}</pre>
+    </div>
+
+    <hr style="margin-top: 50px; border: 0; border-top: 1px solid #ddd;">
+    <p style="text-align: center; color: #888; font-size: 13px;">Chỉ cần bôi đen -> Copy, hoặc nhấn nút Copy để đưa vào tab <strong>Body -> raw -> JSON</strong> trong Postman.</p>
+
+</div>
+
+<script>
+    function copyCode(id) {
+        const pre = document.getElementById(id);
+        const text = pre.innerText || pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Đã Copy!";
+            btn.style.background = "#28a745";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = "var(--primary)";
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
