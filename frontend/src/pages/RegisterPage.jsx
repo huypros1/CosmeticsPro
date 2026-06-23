@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authApi } from '../api/authApi';
@@ -25,7 +25,7 @@ const RegisterPage = () => {
         password_confirmation: data.password_confirmation,
       });
       login(res.token, res.user);
-      toast.success('Đăng ký thành công! Chào mừng bạn đến với CosmeticsPro.');
+      toast.success('Đăng ký thành công! Chào mừng bạn đến với HQCosmetic.');
       navigate('/');
     } catch (err) {
       const errors = err.response?.data?.errors;
@@ -49,7 +49,7 @@ const RegisterPage = () => {
           </div>
           <div className="auth-page__deco-quote">
             <p>"Mỗi ngày là một cơ hội để tỏa sáng với làn da của chính bạn."</p>
-            <span>— CosmeticsPro</span>
+            <span>— HQCosmetic</span>
           </div>
         </div>
       </div>

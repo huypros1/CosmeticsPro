@@ -12,7 +12,7 @@ const BlogDetailPage = () => {
 
   useEffect(() => {
     postApi.getPostBySlug(slug)
-      .then((d) => setPost(d.post || d))
+      .then((d) => setPost(d.data || d))
       .catch(() => setPost(null))
       .finally(() => setLoading(false));
   }, [slug]);
@@ -50,7 +50,7 @@ const BlogDetailPage = () => {
             <Link to="/blog" className="back-link">← Quay lại Blog</Link>
             <div className="blog-detail__meta">
               <span className="text-label" style={{ color: 'var(--color-accent)' }}>
-                {post.category_post?.name || 'Blog'}
+                {post.category?.name || 'Blog'}
               </span>
               <span style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
                 {formatDate(post.created_at)}

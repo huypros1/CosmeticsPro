@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->foreignId('category_id')->constrained('categories')->onDelete('restrict');
             $table->foreignId('brand_id')->constrained('brands')->onDelete('restrict');
+            $table->boolean('is_featured')->default(false);
             $table->string('status')->default('active');
             $table->softDeletes(); // Xóa mềm để tránh mất dấu vết ở đơn hàng cũ
             $table->timestamps();

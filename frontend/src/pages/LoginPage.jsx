@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authApi } from '../api/authApi';
@@ -38,7 +38,7 @@ const LoginPage = () => {
           </div>
           <div className="auth-page__deco-quote">
             <p>"Vẻ đẹp không phải là thứ bạn mặc, mà là thứ bạn cảm nhận."</p>
-            <span>— CosmeticsPro</span>
+            <span>— HQCosmetic</span>
           </div>
         </div>
       </div>

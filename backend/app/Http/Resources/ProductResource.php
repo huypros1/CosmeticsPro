@@ -15,7 +15,7 @@ class ProductResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'content' => $this->content,
-            'image' => $this->image ? url('storage/' . $this->image) : null,
+            'image' => $this->image ? (str_starts_with($this->image, 'http') ? $this->image : url('storage/' . $this->image)) : null,
             'category' => new CategoryResource($this->whenLoaded('category')),
             'brand' => new BrandResource($this->whenLoaded('brand')),
             'is_featured' => $this->is_featured,

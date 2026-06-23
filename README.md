@@ -1,4 +1,4 @@
-<h1 align="center">💄 CosmeticsPro</h1>
+﻿<h1 align="center">💄 HQCosmetic</h1>
 
 <p align="center">
   Website bán mỹ phẩm full-stack: <strong>Laravel 13</strong> (Backend API) + <strong>React + Vite</strong> (Frontend)
@@ -17,7 +17,7 @@
 ## 📁 Cấu trúc dự án
 
 ```
-CosmeticsPro/
+HQCosmetic/
 ├── backend/                  ← Laravel 13 API
 │   ├── app/
 │   │   ├── Http/Controllers/
@@ -63,8 +63,8 @@ CosmeticsPro/
 ### 1. Clone dự án
 
 ```bash
-git clone https://github.com/huypros1/CosmeticsPro.git
-cd CosmeticsPro
+git clone https://github.com/huypros1/HQCosmetic.git
+cd HQCosmetic
 ```
 
 ---
@@ -92,13 +92,13 @@ cp .env.example .env
 Mở file `backend/.env` và cập nhật thông tin database:
 
 ```env
-APP_NAME=CosmeticsPro
+APP_NAME=HQCosmetic
 APP_URL=http://localhost:8000
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=cosmeticspro      # ← Tên database của bạn
+DB_DATABASE=HQCosmetic      # ← Tên database của bạn
 DB_USERNAME=root               # ← Username MySQL
 DB_PASSWORD=                   # ← Password MySQL (để trống nếu dùng Laragon mặc định)
 
@@ -108,10 +108,10 @@ SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:5174
 
 #### 2.4. Tạo database
 
-Tạo database `cosmeticspro` trong MySQL (dùng phpMyAdmin hoặc terminal):
+Tạo database `HQCosmetic` trong MySQL (dùng phpMyAdmin hoặc terminal):
 
 ```sql
-CREATE DATABASE cosmeticspro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE HQCosmetic CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 #### 2.5. Generate App Key & chạy Migration
@@ -160,7 +160,7 @@ cp .env.example .env
 > Nếu chưa có `.env.example`, tạo file `.env` với nội dung:
 
 ```env
-VITE_APP_NAME=CosmeticsPro
+VITE_APP_NAME=HQCosmetic
 VITE_API_URL=http://localhost:8000/api
 ```
 
@@ -222,7 +222,7 @@ Authorization: Bearer {token}
 
 Dự án có sẵn file **Postman Collection** để bạn test API dễ dàng:
 1. Mở Postman
-2. Import file `CosmeticsPro_API.postman_collection.json` (nằm ở thư mục gốc của dự án)
+2. Import file `HQCosmetic_API.postman_collection.json` (nằm ở thư mục gốc của dự án)
 3. Chạy API `Login` thành công, token sẽ tự động được lưu vào biến `{{token}}` để dùng cho các request cần xác thực.
 
 ---

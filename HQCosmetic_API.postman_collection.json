@@ -1,8 +1,8 @@
-{
+﻿{
     "info": {
         "_postman_id": "c1f7a2f2-d6c2-4809-b4b0-a3e970b5550a",
-        "name": "CosmeticsPro API",
-        "description": "API cho ứng dụng CosmeticsPro",
+        "name": "HQCosmetic API",
+        "description": "API cho ứng dụng HQCosmetic",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [

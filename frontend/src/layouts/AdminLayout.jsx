@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+﻿import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AdminLayout = () => {
@@ -14,7 +14,7 @@ const AdminLayout = () => {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="admin-logo">
-          <Link to="/admin">CosmeticsPro Admin</Link>
+          <Link to="/admin">HQCosmetic Admin</Link>
         </div>
         <nav>
           <Link to="/admin/dashboard">Dashboard</Link>

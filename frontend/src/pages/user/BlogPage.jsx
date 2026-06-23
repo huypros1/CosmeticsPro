@@ -64,7 +64,7 @@ const BlogPage = () => {
                 </div>
                 <div className="blog-card__body">
                   <span className="text-label" style={{ color: 'var(--color-accent)' }}>
-                    {post.category_post?.name || 'Blog'}
+                    {post.category?.name || 'Blog'}
                   </span>
                   <h3 className="blog-card__title">{post.title}</h3>
                   <p className="blog-card__date">{formatDate(post.created_at)}</p>
