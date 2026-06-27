@@ -11,14 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $orders = Order::with(['order_items.variant.product', 'order_items.variant.capacity', 'order_items.variant.images'])
-            ->where('user_id', $request->user()->id)
-            ->latest()
-            ->get();
+        $orders = Order::all();
 
-        return OrderResource::collection($orders);
+        return response()->json([
+            'data' => $orders
+        ]);
     }
 
     public function show(Request $request, $id)
