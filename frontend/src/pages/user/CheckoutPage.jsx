@@ -78,6 +78,20 @@ const CheckoutPage = () => {
   const handlePlaceOrder = async () => {
     if (!selectedAddress) { toast.warning('Vui lòng chọn địa chỉ giao hàng'); return; }
     if (cartItems.length === 0) { toast.warning('Giỏ hàng trống'); return; }
+
+    // Build items: variant_id comes from item.variant.id (from CartResource -> ProductVariantResource)
+    const orderItems = cartItems.map((i) => ({
+      variant_id: i.variant?.id ?? i.variant_id,
+      quantity: i.quantity,
+      price: i.price,
+    }));
+
+    // Validate all items have variant_id
+    if (orderItems.some((i) => !i.variant_id)) {
+      toast.error('Có sản phẩm trong giỏ hàng bị lỗi, vui lòng tải lại trang');
+      return;
+    }
+
     try {
       setPlacing(true);
       const res = await orderApi.placeOrder({
@@ -86,19 +100,18 @@ const CheckoutPage = () => {
         payment_method: paymentMethod,
         shipping_fee: shippingFee,
         total_amount: total,
-        items: cartItems.map((i) => ({
-          variant_id: i.variant?.id || i.variant_id,
-          quantity: i.quantity,
-          price: i.price,
-        })),
+        items: orderItems,
       });
       await fetchCart();
       toast.success('Đặt hàng thành công!');
-      // Backend returns { order: { data: {...} } } or { order: {...} }
-      const orderId = res.order?.data?.id || res.order?.id || res.id;
+      // Backend returns { order: { data: {...} } } (OrderResource wraps in data key)
+      const orderId = res.order?.data?.id || res.order?.id || res.data?.id || res.id;
       navigate(`/orders/${orderId}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Đặt hàng thất bại, vui lòng thử lại');
+      const msg = err.response?.data?.message
+        || err.response?.data?.errors
+        || 'Đặt hàng thất bại, vui lòng thử lại';
+      toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setPlacing(false);
     }

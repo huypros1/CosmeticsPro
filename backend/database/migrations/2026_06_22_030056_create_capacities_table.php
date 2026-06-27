@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('capacities', function (Blueprint $table) {
             $table->id();
-            $table->string('value'); // Ví dụ: 2m, 500ml, 1TB
-            $table->string('unit')->nullable(); // Ví dụ: mét, ml, GB
+            $table->string('value'); // Ví dụ: 2, 500
+            $table->enum('unit', ['ml', 'g'])->nullable(); // Ví dụ: ml, g
             $table->timestamps();
         });
     }

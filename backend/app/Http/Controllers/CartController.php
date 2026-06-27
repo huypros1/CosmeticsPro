@@ -12,7 +12,7 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
-        $cartItems = Cart::with(['variant.product', 'variant.capacity'])
+        $cartItems = Cart::with(['variant.product', 'variant.capacity', 'variant.images'])
             ->where('user_id', $request->user()->id)
             ->get();
 
@@ -53,7 +53,7 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Đã thêm vào giỏ hàng',
-            'item' => new CartResource($cartItem->load(['variant.product', 'variant.capacity']))
+            'item' => new CartResource($cartItem->load(['variant.product', 'variant.capacity', 'variant.images']))
         ]);
     }
 
@@ -77,7 +77,7 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Đã cập nhật giỏ hàng',
-            'item' => new CartResource($cartItem->load(['variant.product', 'variant.capacity']))
+            'item' => new CartResource($cartItem->load(['variant.product', 'variant.capacity', 'variant.images']))
         ]);
     }
 

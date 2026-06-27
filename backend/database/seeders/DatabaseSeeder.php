@@ -64,7 +64,7 @@ class DatabaseSeeder extends Seeder
             ['value' => '150', 'unit' => 'ml'],
             ['value' => '200', 'unit' => 'ml'],
             ['value' => '500', 'unit' => 'ml'],
-            ['value' => '1', 'unit' => 'pcs'],
+            ['value' => '125', 'unit' => 'g'],
         ];
         foreach ($capacities as $cap) { Capacity::create($cap); }
 

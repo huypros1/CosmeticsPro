@@ -13,7 +13,7 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $orders = Order::with(['order_items.variant.product', 'order_items.variant.capacity'])
+        $orders = Order::with(['order_items.variant.product', 'order_items.variant.capacity', 'order_items.variant.images'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
@@ -23,7 +23,7 @@ class OrderController extends Controller
 
     public function show(Request $request, $id)
     {
-        $order = Order::with(['order_items.variant.product', 'order_items.variant.capacity', 'shipping_address', 'voucher'])
+        $order = Order::with(['order_items.variant.product', 'order_items.variant.capacity', 'order_items.variant.images', 'shipping_address', 'voucher'])
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 

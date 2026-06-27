@@ -12,7 +12,23 @@ class ProductVariantResource extends JsonResource
         return [
             'id' => $this->id,
             'capacity' => $this->whenLoaded('capacity', function () {
-                return $this->capacity->value . ' ' . $this->capacity->unit;
+                return [
+                    'id' => $this->capacity->id,
+                    'value' => $this->capacity->value,
+                    'unit' => $this->capacity->unit,
+                ];
+            }),
+            'product' => $this->whenLoaded('product', function () {
+                return [
+                    'id' => $this->product->id,
+                    'name' => $this->product->name,
+                    'slug' => $this->product->slug,
+                    'image' => $this->product->image
+                        ? (str_starts_with($this->product->image, 'http')
+                            ? $this->product->image
+                            : url('storage/' . $this->product->image))
+                        : null,
+                ];
             }),
             'price' => $this->price,
             'sale_price' => $this->sale_price,

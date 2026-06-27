@@ -33,13 +33,16 @@ class ProductController extends Controller
 
         if ($request->has('sort')) {
             switch ($request->sort) {
+                case 'price_asc':
                 case 'price-asc':
-                    // Sorting by variants price requires a join or subquery in real app.
-                    // For simplicity, we just sort by ID here if we don't do complex joins.
                     $query->orderBy('id', 'asc');
                     break;
+                case 'price_desc':
                 case 'price-desc':
                     $query->orderBy('id', 'desc');
+                    break;
+                case 'popular':
+                    $query->orderByDesc('reviews_count');
                     break;
                 case 'newest':
                 default:
