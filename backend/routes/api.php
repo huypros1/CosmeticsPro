@@ -13,6 +13,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\VoucherController;
 
+// Admin Controllers
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\BrandController as AdminBrandController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -79,3 +87,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Admin Protected Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Manage Categories
+    Route::apiResource('categories', AdminCategoryController::class);
+
+    // Manage Brands
+    Route::apiResource('brands', AdminBrandController::class);
+
+    // Manage Products
+    Route::apiResource('products', AdminProductController::class);
+
+    // Manage Orders
+    Route::get('/orders', [AdminOrderController::class, 'index']);
+    Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
+    Route::put('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+
+    // Manage Users
+    Route::get('/users', [AdminUserController::class, 'index']);
+    Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole']);
+    Route::put('/users/{id}/status', [AdminUserController::class, 'updateStatus']);
+});
+

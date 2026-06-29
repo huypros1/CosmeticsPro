@@ -85,14 +85,12 @@ const HomePage = () => {
             </div>
           </div>
           <div className="hero__visual">
-            <div className="hero__img-frame">
-              <div className="hero__img-placeholder">
-                <div className="hero__circle hero__circle--1" />
-                <div className="hero__circle hero__circle--2" />
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              </div>
+            <div className="hero__img-frame" style={{ overflow: 'hidden', borderRadius: '24px', boxShadow: 'var(--shadow)' }}>
+              <img 
+                src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1000&auto=format&fit=crop" 
+                alt="Cosmetics Collection" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
             </div>
             <div className="hero__tag hero__tag--1">
               <span>✓</span> Chính hãng 100%
@@ -213,8 +211,12 @@ const HomePage = () => {
                 Đăng ký ngay
               </Link>
             </div>
-            <div className="banner-cta__deco">
-              <div className="banner-cta__circle" />
+            <div className="banner-cta__deco" style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px' }}>
+              <img 
+                src="https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?q=80&w=800&auto=format&fit=crop" 
+                alt="Special Offer" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: '300px' }}
+              />
             </div>
           </div>
         </div>

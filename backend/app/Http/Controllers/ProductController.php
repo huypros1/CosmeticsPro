@@ -15,19 +15,19 @@ class ProductController extends Controller
             ->withCount('reviews')
             ->where('status', 'active');
 
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        if ($request->has('brand')) {
+        if ($request->filled('brand')) {
             $query->whereHas('brand', function ($q) use ($request) {
                 $q->where('slug', $request->brand);
             });
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 

@@ -6,6 +6,10 @@ import { ToastProvider } from './context/ToastContext';
 // Layouts
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
+import Dashboard from './pages/admin/Dashboard';
+import ProductManagement from './pages/admin/ProductManagement';
+import OrderManagement from './pages/admin/OrderManagement';
+import UserManagement from './pages/admin/UserManagement';
 
 // Auth Pages
 import LoginPage from './pages/LoginPage';
@@ -37,6 +41,13 @@ const ProtectedRoute = ({ children }) => {
     </div>
   );
   return user ? children : <Navigate to="/login" replace />;
+};
+
+// Admin Route wrapper
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null; // Or a spinner
+  return (user && user.role === 'admin') ? children : <Navigate to="/" replace />;
 };
 
 // Guest Route (redirect if already logged in)
@@ -75,11 +86,18 @@ const App = () => {
               </Route>
 
               {/* Admin */}
-              <Route path="/admin/*" element={
-                <ProtectedRoute>
+              <Route path="/admin" element={
+                <AdminRoute>
                   <AdminLayout />
-                </ProtectedRoute>
-              } />
+                </AdminRoute>
+              }>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="products" element={<ProductManagement />} />
+                <Route path="categories" element={<div>Categories Management</div>} />
+                <Route path="orders" element={<OrderManagement />} />
+                <Route path="users" element={<UserManagement />} />
+              </Route>
 
               {/* 404 */}
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Trang điểm', 'slug' => 'trang-diem', 'image' => 'https://images.unsplash.com/photo-1512496115841-db0aaf528000?q=80&w=600&auto=format&fit=crop'],
             ['name' => 'Chăm sóc cơ thể', 'slug' => 'cham-soc-co-the', 'image' => 'https://images.unsplash.com/photo-1556228720-1c27bef1dc1f?q=80&w=600&auto=format&fit=crop'],
             ['name' => 'Nước hoa', 'slug' => 'nuoc-hoa', 'image' => 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=600&auto=format&fit=crop'],
+            ['name' => 'Dụng cụ làm đẹp', 'slug' => 'dung-cu-lam-dep', 'image' => 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=600&auto=format&fit=crop'],
         ];
         foreach ($cats as $cat) { Category::create($cat); }
 
@@ -53,6 +54,8 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Vichy', 'slug' => 'vichy'],
             ['name' => 'Chanel', 'slug' => 'chanel'],
             ['name' => 'Dior', 'slug' => 'dior'],
+            ['name' => 'Estee Lauder', 'slug' => 'estee-lauder'],
+            ['name' => 'Innisfree', 'slug' => 'innisfree'],
         ];
         foreach ($brands as $brand) { Brand::create($brand); }
 
@@ -65,6 +68,7 @@ class DatabaseSeeder extends Seeder
             ['value' => '200', 'unit' => 'ml'],
             ['value' => '500', 'unit' => 'ml'],
             ['value' => '125', 'unit' => 'g'],
+            ['value' => '15', 'unit' => 'g'],
         ];
         foreach ($capacities as $cap) { Capacity::create($cap); }
 
@@ -77,9 +81,7 @@ class DatabaseSeeder extends Seeder
                 'category_id' => 1,
                 'brand_id' => 1,
                 'is_featured' => true,
-                'variants' => [
-                    ['capacity_id' => 2, 'price' => 450000, 'sale_price' => 395000, 'stock' => 100],
-                ]
+                'variants' => [['capacity_id' => 2, 'price' => 450000, 'sale_price' => 395000, 'stock' => 100]]
             ],
             [
                 'name' => 'Tinh Chất Khoáng Vichy Mineral 89',
@@ -100,9 +102,7 @@ class DatabaseSeeder extends Seeder
                 'category_id' => 2,
                 'brand_id' => 3,
                 'is_featured' => true,
-                'variants' => [
-                    ['capacity_id' => 7, 'price' => 550000, 'sale_price' => null, 'stock' => 200],
-                ]
+                'variants' => [['capacity_id' => 7, 'price' => 550000, 'sale_price' => null, 'stock' => 200]]
             ],
             [
                 'name' => 'Nước Hoa Nữ Chanel Coco Mademoiselle EDP',
@@ -122,10 +122,8 @@ class DatabaseSeeder extends Seeder
                 'image' => 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=800&auto=format&fit=crop',
                 'category_id' => 1,
                 'brand_id' => 2,
-                'is_featured' => false,
-                'variants' => [
-                    ['capacity_id' => 2, 'price' => 350000, 'sale_price' => 280000, 'stock' => 120],
-                ]
+                'is_featured' => true,
+                'variants' => [['capacity_id' => 2, 'price' => 350000, 'sale_price' => 280000, 'stock' => 120]]
             ],
             [
                 'name' => 'Sữa Tắm Dưỡng Ẩm Chăm Sóc Cơ Thể',
@@ -134,9 +132,7 @@ class DatabaseSeeder extends Seeder
                 'category_id' => 3,
                 'brand_id' => 1,
                 'is_featured' => false,
-                'variants' => [
-                    ['capacity_id' => 6, 'price' => 250000, 'sale_price' => null, 'stock' => 80],
-                ]
+                'variants' => [['capacity_id' => 6, 'price' => 250000, 'sale_price' => null, 'stock' => 80]]
             ],
             [
                 'name' => 'Nước Hoa Nam Dior Sauvage EDP',
@@ -145,9 +141,7 @@ class DatabaseSeeder extends Seeder
                 'category_id' => 4,
                 'brand_id' => 6,
                 'is_featured' => true,
-                'variants' => [
-                    ['capacity_id' => 3, 'price' => 3800000, 'sale_price' => null, 'stock' => 25],
-                ]
+                'variants' => [['capacity_id' => 3, 'price' => 3800000, 'sale_price' => null, 'stock' => 25]]
             ],
             [
                 'name' => 'Phấn Nền Dior Forever Skin Glow',
@@ -156,16 +150,77 @@ class DatabaseSeeder extends Seeder
                 'category_id' => 2,
                 'brand_id' => 6,
                 'is_featured' => true,
-                'variants' => [
-                    ['capacity_id' => 1, 'price' => 1500000, 'sale_price' => 1350000, 'stock' => 40],
-                ]
+                'variants' => [['capacity_id' => 1, 'price' => 1500000, 'sale_price' => 1350000, 'stock' => 40]]
             ],
+            [
+                'name' => 'Tinh Chất Phục Hồi Estee Lauder Advanced Night Repair',
+                'description' => 'Serum chống lão hóa, phục hồi và cấp ẩm chuyên sâu ban đêm.',
+                'image' => 'https://images.unsplash.com/photo-1615397323282-393282363189?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 1,
+                'brand_id' => 7,
+                'is_featured' => true,
+                'variants' => [['capacity_id' => 2, 'price' => 2500000, 'sale_price' => 2300000, 'stock' => 50]]
+            ],
+            [
+                'name' => 'Mặt Nạ Đất Sét Innisfree Super Volcanic Pore',
+                'description' => 'Mặt nạ đất sét tro núi lửa làm sạch lỗ chân lông và tẩy tế bào chết.',
+                'image' => 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 1,
+                'brand_id' => 8,
+                'is_featured' => false,
+                'variants' => [['capacity_id' => 3, 'price' => 350000, 'sale_price' => 310000, 'stock' => 150]]
+            ],
+            [
+                'name' => 'Phấn Phủ Bột Chanel Poudre Universelle Libre',
+                'description' => 'Phấn phủ dạng bột mỏng nhẹ, kiềm dầu và làm mịn màng làn da.',
+                'image' => 'https://images.unsplash.com/photo-1599305090598-fe179d501227?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 2,
+                'brand_id' => 5,
+                'is_featured' => true,
+                'variants' => [['capacity_id' => 1, 'price' => 1700000, 'sale_price' => null, 'stock' => 60]]
+            ],
+            [
+                'name' => 'Sữa Rửa Mặt Tạo Bọt La Roche-Posay Effaclar',
+                'description' => 'Sữa rửa mặt dạng gel tạo bọt, nhẹ nhàng làm sạch da dầu và mụn.',
+                'image' => 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 1,
+                'brand_id' => 1,
+                'is_featured' => false,
+                'variants' => [['capacity_id' => 5, 'price' => 380000, 'sale_price' => 320000, 'stock' => 200]]
+            ],
+            [
+                'name' => 'Son Dưỡng Dior Addict Lip Glow',
+                'description' => 'Son dưỡng màu tự nhiên giúp làm mềm và bảo vệ đôi môi.',
+                'image' => 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 2,
+                'brand_id' => 6,
+                'is_featured' => true,
+                'variants' => [['capacity_id' => 7, 'price' => 850000, 'sale_price' => 810000, 'stock' => 120]]
+            ],
+            [
+                'name' => 'Kem Nền Estee Lauder Double Wear',
+                'description' => 'Kem nền kiềm dầu, độ che phủ hoàn hảo lên đến 24 giờ.',
+                'image' => 'https://images.unsplash.com/photo-1512496115841-db0aaf528000?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 2,
+                'brand_id' => 7,
+                'is_featured' => false,
+                'variants' => [['capacity_id' => 1, 'price' => 1350000, 'sale_price' => null, 'stock' => 85]]
+            ],
+            [
+                'name' => 'Nước Tẩy Trang L\'Oreal Micellar Water',
+                'description' => 'Nước tẩy trang dịu nhẹ 3 trong 1: làm sạch, giữ ẩm và mềm da.',
+                'image' => 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=800&auto=format&fit=crop',
+                'category_id' => 1,
+                'brand_id' => 2,
+                'is_featured' => false,
+                'variants' => [['capacity_id' => 6, 'price' => 210000, 'sale_price' => 165000, 'stock' => 300]]
+            ]
         ];
 
         foreach ($productsData as $data) {
             $product = Product::create([
                 'name' => $data['name'],
-                'slug' => Str::slug($data['name']),
+                'slug' => Str::slug($data['name']) . '-' . Str::random(5),
                 'description' => $data['description'],
                 'image' => $data['image'],
                 'category_id' => $data['category_id'],
@@ -217,8 +272,28 @@ class DatabaseSeeder extends Seeder
         \App\Models\Post::create([
             'title' => '5 bước skincare mỗi ngày cho làn da tỏa sáng',
             'slug' => Str::slug('5 bước skincare mỗi ngày cho làn da tỏa sáng'),
-            'content' => 'Quy trình chăm sóc da cơ bản mà ai cũng nên biết...',
+            'content' => 'Quy trình chăm sóc da cơ bản mà ai cũng nên biết để giữ làn da luôn tươi trẻ, mềm mịn và căng mọng. Không cần quá cầu kỳ, chỉ cần bạn thực hiện đúng và đều đặn các bước sau đây.',
             'thumbnail' => 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=600&auto=format&fit=crop',
+            'category_post_id' => $postCat->id,
+            'author_id' => 1,
+            'status' => 'published'
+        ]);
+        
+        \App\Models\Post::create([
+            'title' => 'Bí mật đằng sau những mùi hương kinh điển',
+            'slug' => Str::slug('Bí mật đằng sau những mùi hương kinh điển'),
+            'content' => 'Nước hoa không chỉ là mùi hương mà còn là một tác phẩm nghệ thuật. Cùng khám phá hành trình tạo nên những chai nước hoa huyền thoại như Chanel No.5, Dior Sauvage...',
+            'thumbnail' => 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=600&auto=format&fit=crop',
+            'category_post_id' => $postCat->id,
+            'author_id' => 1,
+            'status' => 'published'
+        ]);
+
+        \App\Models\Post::create([
+            'title' => 'Lớp nền hoàn hảo: Chọn foundation như thế nào?',
+            'slug' => Str::slug('Lớp nền hoàn hảo Chọn foundation như thế nào'),
+            'content' => 'Một lớp nền đẹp bắt đầu từ việc chọn đúng loại foundation phù hợp với tông da và loại da. Bài viết này sẽ hướng dẫn bạn cách chọn kem nền chuẩn không cần chỉnh.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1512496115841-db0aaf528000?q=80&w=600&auto=format&fit=crop',
             'category_post_id' => $postCat->id,
             'author_id' => 1,
             'status' => 'published'
