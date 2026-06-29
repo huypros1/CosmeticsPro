@@ -12,6 +12,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\PaymentController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\DashboardController;
@@ -86,6 +87,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+
+    // Payment - VietQR
+    Route::post('/payment/vietqr', [PaymentController::class, 'generateVietQR']);
+    Route::get('/payment/status/{orderId}', [PaymentController::class, 'checkStatus']);
 });
 
 /*
@@ -115,5 +120,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/users', [AdminUserController::class, 'index']);
     Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole']);
     Route::put('/users/{id}/status', [AdminUserController::class, 'updateStatus']);
+
+    // Payment Confirmation
+    Route::post('/payment/{orderId}/confirm', [PaymentController::class, 'adminConfirmPayment']);
 });
 

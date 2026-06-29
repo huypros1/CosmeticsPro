@@ -27,6 +27,7 @@ import WishlistPage from './pages/user/WishlistPage';
 import BlogPage from './pages/user/BlogPage';
 import BlogDetailPage from './pages/user/BlogDetailPage';
 import ProfilePage from './pages/user/ProfilePage';
+import VietQRPaymentPage from './pages/user/VietQRPaymentPage';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -83,6 +84,7 @@ const App = () => {
                 <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
                 <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="/payment/vietqr/:orderId" element={<ProtectedRoute><VietQRPaymentPage /></ProtectedRoute>} />
               </Route>
 
               {/* Admin */}
