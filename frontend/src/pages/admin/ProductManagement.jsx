@@ -1,99 +1,298 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';
+import { adminApi } from '../../api/adminApi';
+import { productApi } from '../../api/productApi';
+
+const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+
+const emptyForm = {
+  name: '', description: '', content: '', status: 'active',
+  category_id: '', brand_id: '', is_featured: false,
+};
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [variants, setVariants] = useState([{ capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({});
+  const fileRef = useRef();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = async (p = 1) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8000/api/admin/products', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setProducts(response.data.data); // Assuming pagination
-    } catch (error) {
-      console.error('Error fetching products', error);
+      setLoading(true);
+      const res = await adminApi.getProducts({ page: p });
+      setProducts(res.data.data || res.data || []);
+      setMeta(res.data.meta || {});
+    } catch {
+      console.error('Error fetching products');
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteProduct = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
-    
+  useEffect(() => {
+    fetchProducts(page);
+    productApi.getCategories().then(d => setCategories(d.data || d || [])).catch(() => {});
+    productApi.getBrands().then(d => setBrands(d.data || d || [])).catch(() => {});
+  }, [page]);
+
+  const openCreate = () => {
+    setEditItem(null);
+    setForm(emptyForm);
+    setVariants([{ capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]);
+    setImageFile(null);
+    setImagePreview(null);
+    setShowModal(true);
+  };
+
+  const openEdit = (product) => {
+    setEditItem(product);
+    setForm({
+      name: product.name,
+      description: product.description || '',
+      content: product.content || '',
+      status: product.status,
+      category_id: product.category?.id || '',
+      brand_id: product.brand?.id || '',
+      is_featured: product.is_featured || false,
+    });
+    setImageFile(null);
+    setImagePreview(product.image || null);
+    setVariants(
+      product.variants?.length
+        ? product.variants.map(v => ({
+            id: v.id,
+            capacity_value: v.capacity?.value || '',
+            capacity_unit: v.capacity?.unit || 'ml',
+            price: v.price || '',
+            sale_price: v.sale_price || '',
+            stock: v.stock || '',
+          }))
+        : [{ capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]
+    );
+    setShowModal(true);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const addVariant = () => setVariants(prev => [...prev, { capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]);
+  const removeVariant = (i) => setVariants(prev => prev.filter((_, idx) => idx !== i));
+  const updateVariant = (i, key, val) => setVariants(prev => prev.map((v, idx) => idx === i ? { ...v, [key]: val } : v));
+
+  const handleSave = async (e) => {
+    e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:8000/api/admin/products/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      setSaving(true);
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => {
+        if (k === 'is_featured') fd.append(k, v ? '1' : '0');
+        else if (v !== '') fd.append(k, v);
       });
-      setProducts(products.filter(p => p.id !== id));
-    } catch (error) {
-      console.error('Error deleting product', error);
+      if (imageFile) fd.append('image', imageFile);
+      variants.forEach((v, i) => {
+        if (v.price) {
+          fd.append(`variants[${i}][price]`, v.price);
+          if (v.sale_price) fd.append(`variants[${i}][sale_price]`, v.sale_price);
+          fd.append(`variants[${i}][stock]`, v.stock || 0);
+          if (v.capacity_value) fd.append(`variants[${i}][capacity_value]`, v.capacity_value);
+          fd.append(`variants[${i}][capacity_unit]`, v.capacity_unit);
+          if (v.id) fd.append(`variants[${i}][id]`, v.id);
+        }
+      });
+      if (editItem) {
+        await adminApi.updateProduct(editItem.id, fd);
+      } else {
+        await adminApi.createProduct(fd);
+      }
+      setShowModal(false);
+      fetchProducts(page);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <div>Đang tải danh sách sản phẩm...</div>;
+  const handleDelete = async (id) => {
+    if (!confirm('Xóa sản phẩm này?')) return;
+    try {
+      await adminApi.deleteProduct(id);
+      fetchProducts(page);
+    } catch {
+      alert('Không thể xóa sản phẩm');
+    }
+  };
 
   return (
     <div className="management-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Sản phẩm</h1>
-        <button style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-          + Thêm sản phẩm
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 24 }}>Quản lý Sản phẩm</h1>
+        <button className="btn btn-primary" onClick={openCreate}>+ Thêm sản phẩm</button>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <table className="admin-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Hình ảnh</th>
-              <th>Tên sản phẩm</th>
-              <th>Danh mục</th>
-              <th>Thương hiệu</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
+              <th>ID</th><th>Ảnh</th><th>Tên sản phẩm</th><th>Danh mục</th>
+              <th>Thương hiệu</th><th>Biến thể</th><th>Trạng thái</th><th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            {products.map(product => (
-              <tr key={product.id}>
-                <td>#{product.id}</td>
-                <td>
-                  {product.image ? (
-                    <img src={`http://localhost:8000${product.image}`} alt={product.name} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} />
-                  ) : (
-                    <div style={{ width: 50, height: 50, background: '#e2e8f0', borderRadius: 4 }}></div>
-                  )}
-                </td>
-                <td>{product.name}</td>
-                <td>{product.category?.name}</td>
-                <td>{product.brand?.name}</td>
-                <td>
-                  <span className={product.status === 'active' ? 'status-badge status-delivered' : 'status-badge status-cancelled'}>
-                    {product.status === 'active' ? 'Hoạt động' : 'Đã ẩn'}
-                  </span>
-                </td>
-                <td>
-                  <button style={{ marginRight: '8px', padding: '4px 8px', cursor: 'pointer' }}>Sửa</button>
-                  <button onClick={() => deleteProduct(product.id)} style={{ color: 'red', padding: '4px 8px', cursor: 'pointer' }}>Xóa</button>
-                </td>
-              </tr>
-            ))}
-            {products.length === 0 && (
-              <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '24px' }}>Chưa có sản phẩm nào</td>
-              </tr>
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i}>{Array.from({ length: 8 }).map((_, j) => (
+                  <td key={j}><div className="skeleton" style={{ height: 16, borderRadius: 4 }} /></td>
+                ))}</tr>
+              ))
+              : products.map(p => (
+                <tr key={p.id}>
+                  <td>#{p.id}</td>
+                  <td>
+                    {p.image
+                      ? <img src={p.image.startsWith('http') ? p.image : `http://localhost:8000${p.image}`} alt={p.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} />
+                      : <div style={{ width: 52, height: 52, background: 'var(--color-gray-100)', borderRadius: 8 }} />
+                    }
+                  </td>
+                  <td style={{ fontWeight: 600 }}>{p.name}</td>
+                  <td style={{ color: 'var(--color-text-secondary)' }}>{p.category?.name || '—'}</td>
+                  <td style={{ color: 'var(--color-text-secondary)' }}>{p.brand?.name || '—'}</td>
+                  <td>
+                    {p.variants?.length
+                      ? <span style={{ fontSize: 12, background: 'var(--color-gray-100)', padding: '2px 8px', borderRadius: 20 }}>{p.variants.length} biến thể</span>
+                      : <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Chưa có</span>
+                    }
+                  </td>
+                  <td>
+                    <span className={`status-badge ${p.status === 'active' ? 'status-delivered' : 'status-cancelled'}`}>
+                      {p.status === 'active' ? 'Hoạt động' : 'Ẩn'}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="btn btn-ghost btn-sm" style={{ marginRight: 6 }} onClick={() => openEdit(p)}>Sửa</button>
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-error)' }} onClick={() => handleDelete(p.id)}>Xóa</button>
+                  </td>
+                </tr>
+              ))
+            }
+            {!loading && products.length === 0 && (
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)' }}>Chưa có sản phẩm nào</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {meta.last_page > 1 && (
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 24 }}>
+          {Array.from({ length: meta.last_page }).map((_, i) => (
+            <button key={i + 1} onClick={() => setPage(i + 1)}
+              className={`pagination__page${page === i + 1 ? ' active' : ''}`}
+            >{i + 1}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 999, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '32px 16px', overflowY: 'auto' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, width: '100%', maxWidth: 760, boxShadow: 'var(--shadow-xl)', marginBottom: 32 }}>
+            <h2 style={{ margin: '0 0 24px', fontSize: 20 }}>{editItem ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}</h2>
+            <form onSubmit={handleSave}>
+              {/* Row 1 */}
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label">Tên sản phẩm *</label>
+                <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">Danh mục *</label>
+                  <select className="form-select" value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })} required>
+                    <option value="">-- Chọn danh mục --</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Thương hiệu *</label>
+                  <select className="form-select" value={form.brand_id} onChange={e => setForm({ ...form, brand_id: e.target.value })} required>
+                    <option value="">-- Chọn thương hiệu --</option>
+                    {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div className="form-group">
+                  <label className="form-label">Trạng thái</label>
+                  <select className="form-select" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Ẩn</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 24 }}>
+                  <input type="checkbox" id="is_featured" checked={form.is_featured} onChange={e => setForm({ ...form, is_featured: e.target.checked })} />
+                  <label htmlFor="is_featured" style={{ cursor: 'pointer', userSelect: 'none' }}>Sản phẩm nổi bật</label>
+                </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label">Mô tả ngắn</label>
+                <textarea className="form-textarea" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+              </div>
+              {/* Image */}
+              <div className="form-group" style={{ marginBottom: 24 }}>
+                <label className="form-label">Ảnh sản phẩm</label>
+                {imagePreview && (
+                  <img src={imagePreview.startsWith('http') ? imagePreview : `http://localhost:8000${imagePreview}`} alt="preview"
+                    style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+                )}
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => fileRef.current?.click()}>
+                  {imagePreview ? 'Đổi ảnh' : 'Chọn ảnh'}
+                </button>
+              </div>
+
+              {/* Variants */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <label className="form-label" style={{ margin: 0 }}>Biến thể sản phẩm</label>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={addVariant}>+ Thêm biến thể</button>
+                </div>
+                {variants.map((v, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 80px 1.5fr 1.5fr 1fr auto', gap: 8, marginBottom: 10, alignItems: 'center' }}>
+                    <input className="form-input" placeholder="Dung tích (e.g. 50)" value={v.capacity_value} onChange={e => updateVariant(i, 'capacity_value', e.target.value)} />
+                    <select className="form-select" value={v.capacity_unit} onChange={e => updateVariant(i, 'capacity_unit', e.target.value)}>
+                      {['ml', 'g', 'oz', 'L', 'kg'].map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                    <input className="form-input" placeholder="Giá *" type="number" value={v.price} onChange={e => updateVariant(i, 'price', e.target.value)} />
+                    <input className="form-input" placeholder="Giá sale" type="number" value={v.sale_price} onChange={e => updateVariant(i, 'sale_price', e.target.value)} />
+                    <input className="form-input" placeholder="Tồn kho" type="number" value={v.stock} onChange={e => updateVariant(i, 'stock', e.target.value)} />
+                    {variants.length > 1 && (
+                      <button type="button" onClick={() => removeVariant(i)} style={{ padding: '6px 10px', border: 'none', background: '#fee2e2', color: '#dc2626', borderRadius: 6, cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>×</button>
+                    )}
+                  </div>
+                ))}
+                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>Mỗi hàng là 1 biến thể. Bỏ trống Dung tích nếu sản phẩm không có.</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Hủy</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu sản phẩm'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

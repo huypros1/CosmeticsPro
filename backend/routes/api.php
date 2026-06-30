@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,11 +32,14 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 
 // Auth
 Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
 
 // Products & Catalog
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/featured', [ProductController::class, 'featured']);
+Route::get('/products/new-arrivals', [ProductController::class, 'newArrivals']);
+Route::get('/products/on-sale', [ProductController::class, 'onSale']);
+Route::get('/products/{slug}/related', [ProductController::class, 'related']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/brands', [BrandController::class, 'index']);
@@ -44,7 +49,7 @@ Route::get('/reviews/{productId}', [ReviewController::class, 'index']);
 Route::get('/posts', [PostController::class, 'index']);
 Route::get('/posts/{slug}', [PostController::class, 'show']);
 
-// Vouchers (validation can be public or protected, but usually requires user auth for usage limit, so we protect it or just let it be public for checking)
+// Vouchers
 Route::post('/vouchers/validate', [VoucherController::class, 'validateVoucher']);
 
 
@@ -60,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Profile & Addresses
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/avatar', [ProfileController::class, 'uploadAvatar']);
     Route::put('/profile/password', [ProfileController::class, 'changePassword']);
     Route::get('/profile/addresses', [ProfileController::class, 'getAddresses']);
     Route::post('/profile/addresses', [ProfileController::class, 'addAddress']);
@@ -121,7 +127,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole']);
     Route::put('/users/{id}/status', [AdminUserController::class, 'updateStatus']);
 
+    // Manage Posts (Blog)
+    Route::get('/posts/categories', [AdminPostController::class, 'categories']);
+    Route::apiResource('posts', AdminPostController::class);
+
+    // Manage Reviews
+    Route::get('/reviews', [AdminReviewController::class, 'index']);
+    Route::delete('/reviews/{id}', [AdminReviewController::class, 'destroy']);
+
     // Payment Confirmation
     Route::post('/payment/{orderId}/confirm', [PaymentController::class, 'adminConfirmPayment']);
 });
-

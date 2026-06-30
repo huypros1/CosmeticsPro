@@ -3067,3 +3067,165 @@
   .qrpage-title { display: none; }
 }
 
+/* ═══════════════════════════════════════════
+   Testimonials Section
+═══════════════════════════════════════════ */
+.section--testimonials {
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, #fef9f5 100%);
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.testimonial-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 12px rgba(0,0,0,.04);
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.testimonial-card--active {
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 24px rgba(201,149,106,.12);
+  transform: translateY(-2px);
+}
+
+.testimonial-card__stars { display: flex; }
+
+.testimonial-card__text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  flex: 1;
+  font-style: italic;
+}
+
+.testimonial-card__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.testimonial-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent), #a67652);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.testimonial-card__name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.testimonial-card__product {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   Store Map Section
+═══════════════════════════════════════════ */
+.section--map {
+  background: var(--color-bg);
+}
+
+.store-map-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  align-items: stretch;
+}
+
+.store-info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.store-info__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.store-info__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.store-info__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.store-info__value {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.store-map iframe {
+  border-radius: 16px;
+  width: 100%;
+  height: 380px;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .store-map-grid {
+    grid-template-columns: 1fr;
+  }
+  .store-map iframe { height: 260px; }
+}
+
+/* ═══════════════════════════════════════════
+   Profile Avatar Hover
+═══════════════════════════════════════════ */
+.profile-avatar:hover .avatar-overlay {
+  opacity: 1 !important;
+}
+
+/* ═══════════════════════════════════════════
+   Section Sale highlight
+═══════════════════════════════════════════ */
+.section--sale {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0e8 100%);
+  position: relative;
+}
+
+.section--sale::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ef4444, #C9956A);
+}

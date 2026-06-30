@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { profileApi } from '../../api/profileApi';
@@ -199,6 +199,8 @@ const ProfilePage = () => {
   const [savingPw, setSavingPw] = useState(false);
   const [addingAddr, setAddingAddr] = useState(false);
   const [showAddAddr, setShowAddAddr] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: { name: user?.name || '' },
@@ -224,6 +226,24 @@ const ProfilePage = () => {
       toast.success('Cập nhật thông tin thành công');
     } catch { toast.error('Không thể cập nhật thông tin'); }
     finally { setSavingProfile(false); }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setUploadingAvatar(true);
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res = await profileApi.uploadAvatar(fd);
+      const token = localStorage.getItem('token');
+      login(token, res.data?.user || res.user || { ...user });
+      toast.success('Cập nhật ảnh đại diện thành công');
+    } catch {
+      toast.error('Không thể cập nhật ảnh đại diện');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const onChangePassword = async (data) => {
@@ -283,15 +303,34 @@ const ProfilePage = () => {
           {/* Sidebar */}
           <aside className="profile-sidebar">
             <div className="profile-user">
-              <div className="profile-avatar">
-                {user?.avatar
-                  ? <img src={user.avatar} alt={user.name} />
-                  : <span>{user?.name?.charAt(0).toUpperCase()}</span>
-                }
+              <div
+                className="profile-avatar"
+                onClick={() => avatarInputRef.current?.click()}
+                title="Nhấp để thay đổi ảnh đại diện"
+                style={{ cursor: 'pointer', position: 'relative' }}
+              >
+                {uploadingAvatar ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                    <div style={{ width: 24, height: 24, border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  </div>
+                ) : user?.avatar ? (
+                  <img src={user.avatar.startsWith('http') ? user.avatar : `http://localhost:8000${user.avatar}`} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span>{user?.name?.charAt(0).toUpperCase()}</span>
+                )}
+                {/* Camera overlay */}
+                <div style={{
+                  position: 'absolute', inset: 0, background: 'rgba(0,0,0,.4)', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  opacity: 0, transition: 'opacity 0.2s',
+                  fontSize: 20,
+                }} className="avatar-overlay">📷</div>
               </div>
+              <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
               <div>
                 <p className="profile-user__name">{user?.name}</p>
                 <p className="profile-user__email">{user?.email}</p>
+                <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>Nhấp vào ảnh để thay đổi</p>
               </div>
             </div>
             <nav className="profile-nav">

@@ -22,7 +22,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        return Order::with(['user', 'shipping_address', 'voucher', 'order_items.product', 'order_items.variant.capacity'])
+        return Order::with(['user', 'shipping_address', 'voucher', 'order_items.variant.product', 'order_items.variant.capacity'])
             ->findOrFail($id);
     }
 

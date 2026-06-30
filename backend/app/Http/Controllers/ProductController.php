@@ -82,4 +82,48 @@ class ProductController extends Controller
 
         return ProductResource::collection($products);
     }
+
+    public function newArrivals()
+    {
+        $products = Product::with(['category', 'brand', 'variants.capacity', 'variants.images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active')
+            ->latest()
+            ->take(8)
+            ->get();
+
+        return ProductResource::collection($products);
+    }
+
+    public function onSale()
+    {
+        $products = Product::with(['category', 'brand', 'variants.capacity', 'variants.images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active')
+            ->whereHas('variants', function ($q) {
+                $q->whereNotNull('sale_price')->where('sale_price', '>', 0);
+            })
+            ->take(8)
+            ->get();
+
+        return ProductResource::collection($products);
+    }
+
+    public function related(Request $request, $slug)
+    {
+        $product = Product::where('slug', $slug)->where('status', 'active')->firstOrFail();
+
+        $related = Product::with(['category', 'brand', 'variants.capacity', 'variants.images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('status', 'active')
+            ->where('id', '!=', $product->id)
+            ->where('category_id', $product->category_id)
+            ->take(6)
+            ->get();
+
+        return ProductResource::collection($related);
+    }
 }

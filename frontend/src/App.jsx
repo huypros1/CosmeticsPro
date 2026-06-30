@@ -6,10 +6,15 @@ import { ToastProvider } from './context/ToastContext';
 // Layouts
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
+
+// Admin Pages
 import Dashboard from './pages/admin/Dashboard';
 import ProductManagement from './pages/admin/ProductManagement';
+import CategoryManagement from './pages/admin/CategoryManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 import UserManagement from './pages/admin/UserManagement';
+import PostManagement from './pages/admin/PostManagement';
+import ReviewManagement from './pages/admin/ReviewManagement';
 
 // Auth Pages
 import LoginPage from './pages/LoginPage';
@@ -47,7 +52,7 @@ const ProtectedRoute = ({ children }) => {
 // Admin Route wrapper
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return null; // Or a spinner
+  if (loading) return null;
   return (user && user.role === 'admin') ? children : <Navigate to="/" replace />;
 };
 
@@ -96,8 +101,10 @@ const App = () => {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="products" element={<ProductManagement />} />
-                <Route path="categories" element={<div>Categories Management</div>} />
+                <Route path="categories" element={<CategoryManagement />} />
                 <Route path="orders" element={<OrderManagement />} />
+                <Route path="posts" element={<PostManagement />} />
+                <Route path="reviews" element={<ReviewManagement />} />
                 <Route path="users" element={<UserManagement />} />
               </Route>
 

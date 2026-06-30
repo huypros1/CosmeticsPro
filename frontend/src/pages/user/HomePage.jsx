@@ -3,29 +3,50 @@ import { Link } from 'react-router-dom';
 import { productApi } from '../../api/productApi';
 import { postApi } from '../../api/postApi';
 import ProductCard from '../../components/ProductCard';
+import StarRating from '../../components/StarRating';
 
 const formatDate = (date) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(date));
 
+// Testimonial data
+const testimonials = [
+  { name: 'Nguyễn Thị Lan', avatar: 'L', rating: 5, text: 'Sản phẩm chất lượng tuyệt vời! Da mình cải thiện rõ rệt chỉ sau 2 tuần sử dụng. Sẽ tiếp tục ủng hộ HQCosmetic!', product: 'Serum Vitamin C' },
+  { name: 'Trần Minh Hoa', avatar: 'H', rating: 5, text: 'Giao hàng nhanh, đóng gói cẩn thận. Kem dưỡng ẩm thật sự tuyệt, mình đã mua lần thứ 3 rồi đó!', product: 'Kem dưỡng ẩm' },
+  { name: 'Lê Thu Hương', avatar: 'H', rating: 5, text: 'Hàng chính hãng, giá cả hợp lý. Tư vấn viên nhiệt tình, hỗ trợ rất tốt. Highly recommend!', product: 'Set dưỡng da' },
+  { name: 'Phạm Bảo Ngọc', avatar: 'N', rating: 5, text: 'Mình đã thử nhiều shop nhưng chỉ tin tưởng HQCosmetic vì hàng luôn authentic và dịch vụ tốt.', product: 'Toner Cân bằng' },
+];
+
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const [onSaleProducts, setOnSaleProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [posts, setPosts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setProductsLoading(true);
-        const [prodData, catData, postData] = await Promise.allSettled([
+        const [prodData, newData, saleData, catData, postData] = await Promise.allSettled([
           productApi.getFeaturedProducts(),
+          productApi.getNewArrivals(),
+          productApi.getOnSale(),
           productApi.getCategories(),
           postApi.getPosts({ per_page: 3 }),
         ]);
         if (prodData.status === 'fulfilled') {
-          // getFeaturedProducts returns ResourceCollection: { data: [...] }
           const val = prodData.value;
           setFeaturedProducts(val.data || val || []);
+        }
+        if (newData.status === 'fulfilled') {
+          const val = newData.value;
+          setNewArrivals(val.data || val || []);
+        }
+        if (saleData.status === 'fulfilled') {
+          const val = saleData.value;
+          setOnSaleProducts(val.data || val || []);
         }
         if (catData.status === 'fulfilled') {
           const val = catData.value;
@@ -33,7 +54,6 @@ const HomePage = () => {
         }
         if (postData.status === 'fulfilled') {
           const val = postData.value;
-          // paginated response: { data: [...] }
           setPosts(val.data || val || []);
         }
       } finally {
@@ -43,9 +63,32 @@ const HomePage = () => {
     fetchData();
   }, []);
 
+  // Auto-rotate testimonials
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveTestimonial(prev => (prev + 1) % testimonials.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const ProductSkeleton = () => (
+    <div className="grid-products">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="product-card-skeleton">
+          <div className="skeleton" style={{ aspectRatio: '4/5', borderRadius: 8 }} />
+          <div style={{ padding: '14px 0' }}>
+            <div className="skeleton" style={{ height: 12, width: '60%', marginBottom: 8, borderRadius: 4 }} />
+            <div className="skeleton" style={{ height: 16, width: '90%', marginBottom: 8, borderRadius: 4 }} />
+            <div className="skeleton" style={{ height: 14, width: '40%', borderRadius: 4 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="home-page">
-      {/* Hero */}
+      {/* ── Hero ── */}
       <section className="hero">
         <div className="container hero__inner">
           <div className="hero__content">
@@ -60,12 +103,8 @@ const HomePage = () => {
               nâng niu làn da và tôn vinh vẻ đẹp riêng của bạn.
             </p>
             <div className="hero__actions">
-              <Link to="/products" className="btn btn-primary btn-lg">
-                Khám phá ngay
-              </Link>
-              <Link to="/blog" className="btn btn-outline btn-lg">
-                Blog làm đẹp
-              </Link>
+              <Link to="/products" className="btn btn-primary btn-lg">Khám phá ngay</Link>
+              <Link to="/blog" className="btn btn-outline btn-lg">Blog làm đẹp</Link>
             </div>
             <div className="hero__stats">
               <div className="hero__stat">
@@ -86,23 +125,19 @@ const HomePage = () => {
           </div>
           <div className="hero__visual">
             <div className="hero__img-frame" style={{ overflow: 'hidden', borderRadius: '24px', boxShadow: 'var(--shadow)' }}>
-              <img 
-                src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1000&auto=format&fit=crop" 
-                alt="Cosmetics Collection" 
+              <img
+                src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1000&auto=format&fit=crop"
+                alt="Cosmetics Collection"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
             </div>
-            <div className="hero__tag hero__tag--1">
-              <span>✓</span> Chính hãng 100%
-            </div>
-            <div className="hero__tag hero__tag--2">
-              <span>★</span> 4.9/5 đánh giá
-            </div>
+            <div className="hero__tag hero__tag--1"><span>✓</span> Chính hãng 100%</div>
+            <div className="hero__tag hero__tag--2"><span>★</span> 4.9/5 đánh giá</div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* ── Cam kết (Features) ── */}
       <section className="features-bar">
         <div className="container">
           <div className="features-bar__grid">
@@ -124,7 +159,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* ── Categories ── */}
       {categories.length > 0 && (
         <section className="section">
           <div className="container">
@@ -137,11 +172,7 @@ const HomePage = () => {
             </div>
             <div className="categories-grid">
               {categories.slice(0, 6).map((cat) => (
-                <Link
-                  key={cat.id}
-                  to={`/products?category=${cat.slug}`}
-                  className="category-card"
-                >
+                <Link key={cat.id} to={`/products?category=${cat.slug}`} className="category-card">
                   <div className="category-card__img">
                     {cat.image ? (
                       <img src={cat.image} alt={cat.name} />
@@ -159,7 +190,27 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* Featured Products */}
+      {/* ── Sản phẩm mới ── */}
+      <section className="section">
+        <div className="container">
+          <div className="section-header">
+            <div>
+              <p className="text-label" style={{ marginBottom: 8 }}>Mới nhất</p>
+              <h2 className="text-heading-lg">Sản phẩm mới về</h2>
+            </div>
+            <Link to="/products?sort=newest" className="btn btn-outline btn-sm">Xem tất cả</Link>
+          </div>
+          {productsLoading ? <ProductSkeleton /> : newArrivals.length > 0 ? (
+            <div className="grid-products">
+              {newArrivals.map((product) => <ProductCard key={product.id} product={product} />)}
+            </div>
+          ) : (
+            <div className="empty-state"><div className="empty-state__icon">🌸</div><p className="empty-state__title">Chưa có sản phẩm</p></div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Sản phẩm bán chạy ── */}
       <section className="section" style={{ background: 'var(--color-gray-50)' }}>
         <div className="container">
           <div className="section-header">
@@ -167,37 +218,39 @@ const HomePage = () => {
               <p className="text-label" style={{ marginBottom: 8 }}>Nổi bật</p>
               <h2 className="text-heading-lg">Sản phẩm bán chạy</h2>
             </div>
-            <Link to="/products" className="btn btn-outline btn-sm">Xem tất cả</Link>
+            <Link to="/products?sort=popular" className="btn btn-outline btn-sm">Xem tất cả</Link>
           </div>
-          {productsLoading ? (
+          {productsLoading ? <ProductSkeleton /> : featuredProducts.length > 0 ? (
             <div className="grid-products">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="product-card-skeleton">
-                  <div className="skeleton" style={{ aspectRatio: '4/5', borderRadius: 8 }} />
-                  <div style={{ padding: '14px 0' }}>
-                    <div className="skeleton" style={{ height: 12, width: '60%', marginBottom: 8, borderRadius: 4 }} />
-                    <div className="skeleton" style={{ height: 16, width: '90%', marginBottom: 8, borderRadius: 4 }} />
-                    <div className="skeleton" style={{ height: 14, width: '40%', borderRadius: 4 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : featuredProducts.length > 0 ? (
-            <div className="grid-products">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {featuredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
           ) : (
-            <div className="empty-state">
-              <div className="empty-state__icon">🌸</div>
-              <p className="empty-state__title">Chưa có sản phẩm</p>
-            </div>
+            <div className="empty-state"><div className="empty-state__icon">🌸</div><p className="empty-state__title">Chưa có sản phẩm</p></div>
           )}
         </div>
       </section>
 
-      {/* Banner CTA */}
+      {/* ── Sản phẩm đang sales ── */}
+      {(productsLoading || onSaleProducts.length > 0) && (
+        <section className="section section--sale">
+          <div className="container">
+            <div className="section-header">
+              <div>
+                <p className="text-label" style={{ marginBottom: 8, color: 'var(--color-error)' }}>🔥 Flash Sale</p>
+                <h2 className="text-heading-lg">Đang giảm giá</h2>
+              </div>
+              <Link to="/products" className="btn btn-outline btn-sm">Xem tất cả</Link>
+            </div>
+            {productsLoading ? <ProductSkeleton /> : (
+              <div className="grid-products">
+                {onSaleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── Banner CTA ── */}
       <section className="banner-cta">
         <div className="container">
           <div className="banner-cta__inner">
@@ -207,14 +260,12 @@ const HomePage = () => {
               <p className="banner-cta__desc">
                 Đăng ký thành viên ngay hôm nay và nhận ngay ưu đãi độc quyền cho đơn hàng đầu tiên.
               </p>
-              <Link to="/register" className="btn btn-accent btn-lg">
-                Đăng ký ngay
-              </Link>
+              <Link to="/register" className="btn btn-accent btn-lg">Đăng ký ngay</Link>
             </div>
             <div className="banner-cta__deco" style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px' }}>
-              <img 
-                src="https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?q=80&w=800&auto=format&fit=crop" 
-                alt="Special Offer" 
+              <img
+                src="https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?q=80&w=800&auto=format&fit=crop"
+                alt="Special Offer"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: '300px' }}
               />
             </div>
@@ -222,9 +273,52 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Blog */}
+      {/* ── Đánh giá khách hàng ── */}
+      <section className="section section--testimonials">
+        <div className="container">
+          <div className="section-header" style={{ marginBottom: 40 }}>
+            <div>
+              <p className="text-label" style={{ marginBottom: 8 }}>Khách hàng nói gì</p>
+              <h2 className="text-heading-lg">Đánh giá từ khách hàng</h2>
+            </div>
+          </div>
+          <div className="testimonials-grid">
+            {testimonials.map((t, i) => (
+              <div key={i} className={`testimonial-card${i === activeTestimonial ? ' testimonial-card--active' : ''}`}>
+                <div className="testimonial-card__stars">
+                  <StarRating rating={t.rating} size={16} />
+                </div>
+                <p className="testimonial-card__text">"{t.text}"</p>
+                <div className="testimonial-card__author">
+                  <div className="testimonial-card__avatar">{t.avatar}</div>
+                  <div>
+                    <p className="testimonial-card__name">{t.name}</p>
+                    <p className="testimonial-card__product">Đã mua: {t.product}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Dots */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 28 }}>
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTestimonial(i)}
+                style={{
+                  width: i === activeTestimonial ? 24 : 8, height: 8, borderRadius: 4,
+                  background: i === activeTestimonial ? 'var(--color-accent)' : 'var(--color-border)',
+                  border: 'none', cursor: 'pointer', transition: 'all 0.3s',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Blog ── */}
       {posts.length > 0 && (
-        <section className="section">
+        <section className="section" style={{ background: 'var(--color-gray-50)' }}>
           <div className="container">
             <div className="section-header">
               <div>
@@ -256,6 +350,63 @@ const HomePage = () => {
           </div>
         </section>
       )}
+
+      {/* ── Bản đồ ── */}
+      <section className="section section--map">
+        <div className="container">
+          <div className="section-header" style={{ marginBottom: 32 }}>
+            <div>
+              <p className="text-label" style={{ marginBottom: 8 }}>Tìm chúng tôi</p>
+              <h2 className="text-heading-lg">Cửa hàng của chúng tôi</h2>
+            </div>
+          </div>
+          <div className="store-map-grid">
+            <div className="store-info">
+              <div className="store-info__item">
+                <div className="store-info__icon">📍</div>
+                <div>
+                  <p className="store-info__label">Địa chỉ</p>
+                  <p className="store-info__value">123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</p>
+                </div>
+              </div>
+              <div className="store-info__item">
+                <div className="store-info__icon">🕐</div>
+                <div>
+                  <p className="store-info__label">Giờ mở cửa</p>
+                  <p className="store-info__value">Thứ 2 – Thứ 7: 8:00 – 21:00</p>
+                  <p className="store-info__value">Chủ nhật: 9:00 – 19:00</p>
+                </div>
+              </div>
+              <div className="store-info__item">
+                <div className="store-info__icon">📞</div>
+                <div>
+                  <p className="store-info__label">Điện thoại</p>
+                  <p className="store-info__value">0909 123 456</p>
+                </div>
+              </div>
+              <div className="store-info__item">
+                <div className="store-info__icon">✉️</div>
+                <div>
+                  <p className="store-info__label">Email</p>
+                  <p className="store-info__value">support@hqcosmetic.vn</p>
+                </div>
+              </div>
+            </div>
+            <div className="store-map">
+              <iframe
+                title="HQCosmetic Store Location"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4440979085!2d106.69868531411624!3d10.77720146225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4670702e31%3A0xa5777f9c3eb5c0!2zTmd1eeG7hW4gSHXhu4csIELhur9uIE5naOOpLCBRdeG6rW4gMSwgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5oLCBWaWV0bmFt!5e0!3m2!1svi!2s!4v1695000000000!5m2!1svi!2s"
+                width="100%"
+                height="380"
+                style={{ border: 0, borderRadius: 16, display: 'block' }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

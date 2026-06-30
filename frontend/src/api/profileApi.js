@@ -4,6 +4,9 @@ export const profileApi = {
   // Profile
   getProfile: () => axiosClient.get('/profile'),
   updateProfile: (data) => axiosClient.put('/profile', data),
+  uploadAvatar: (formData) => axiosClient.post('/profile/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   // data: { name, avatar? }
   changePassword: (data) => axiosClient.put('/profile/password', data),
   // data: { current_password, password, password_confirmation }

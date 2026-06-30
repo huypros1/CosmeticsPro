@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\OrderResource;
+use App\Mail\OrderPlaced;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -61,6 +63,12 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                 ]);
+
+                // Decrement stock
+                $variant = \App\Models\ProductVariant::find($item['variant_id']);
+                if ($variant && $variant->stock >= $item['quantity']) {
+                    $variant->decrement('stock', $item['quantity']);
+                }
             }
 
             // Clear cart
@@ -71,10 +79,22 @@ class OrderController extends Controller
             // Simulate VNPay / MoMo success url directly for testing purposes
             $paymentUrl = null;
             if (in_array($request->payment_method, ['vnpay', 'momo'])) {
-                // In a real app, you would call VNPay/MoMo API here.
-                // For now, we simulate success by returning the frontend order detail URL.
                 $order->payment_status = 'paid';
                 $order->save();
+            }
+
+            // Send order confirmation email
+            try {
+                $orderWithRelations = $order->load([
+                    'user',
+                    'order_items.variant.product',
+                    'order_items.variant.capacity',
+                    'shipping_address',
+                ]);
+                Mail::to($request->user()->email)->send(new OrderPlaced($orderWithRelations));
+            } catch (\Exception $mailEx) {
+                // Don't fail order if mail fails
+                \Log::warning('Order email failed: ' . $mailEx->getMessage());
             }
 
             return response()->json([

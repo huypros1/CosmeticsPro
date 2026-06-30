@@ -18,25 +18,33 @@
 ## ✨ Tính năng nổi bật
 
 ### 🛍️ Người dùng
-- Duyệt sản phẩm, tìm kiếm & lọc theo danh mục / thương hiệu
-- Chi tiết sản phẩm với biến thể dung tích, đánh giá & xếp hạng sao
-- Giỏ hàng, Danh sách yêu thích
-- Thanh toán: **COD** hoặc **VietQR (Chuyển khoản ngân hàng)**
-- Lịch sử đơn hàng, theo dõi trạng thái đơn
-- Quản lý hồ sơ & địa chỉ giao hàng
-- Blog / Bài viết làm đẹp
+- **Trang chủ hiện đại:** Các section chuyên biệt như Sản phẩm mới, Sản phẩm Flash Sale, Banner CTA, Đánh giá khách hàng tự động xoay (carousel), và Bản đồ cửa hàng (Google Maps).
+- **Duyệt sản phẩm:** Tìm kiếm, lọc theo danh mục, thương hiệu, đánh giá sao.
+- **Chi tiết sản phẩm toàn diện:** Quản lý biến thể (dung tích), gợi ý **Sản phẩm liên quan** (You may also like) và **Gợi ý mua theo bộ** (Complete the look).
+- **Quản lý Hồ sơ cá nhân (Profile):** Cập nhật thông tin, thay đổi mật khẩu, **đổi ảnh đại diện (avatar)** dễ dàng bằng thao tác click.
+- **Giỏ hàng & Danh sách yêu thích:** Lưu trữ và quản lý mua sắm tiện lợi.
+- **Thanh toán:** Hỗ trợ **COD** và **VietQR (Chuyển khoản ngân hàng)**.
+- **Lịch sử đơn hàng:** Theo dõi tình trạng, huỷ đơn.
+- **Blog:** Xem danh sách bài viết chia sẻ bí quyết làm đẹp, tin tức.
+
+### ✉️ Email Đặt hàng tự động
+- Gửi email xác nhận với giao diện HTML/CSS bắt mắt, sang trọng mỗi khi đặt hàng thành công.
+- Tuỳ biến dễ dàng với `App\Mail\OrderPlaced`.
 
 ### 🏦 Thanh toán VietQR
-- Sau khi đặt hàng, khách được **redirect sang trang QR riêng** (nền tối, sang trọng)
-- Hiển thị **mã QR quét được bằng mọi app ngân hàng** nội địa Việt Nam
-- **Tự động polling** mỗi 5 giây kiểm tra trạng thái thanh toán
-- Khi Admin xác nhận → trang **tự động hiện thành công** + redirect đến đơn hàng
+- Sau khi đặt hàng, khách được **redirect sang trang QR riêng** (nền tối, sang trọng).
+- Hiển thị **mã QR quét được bằng mọi app ngân hàng** nội địa Việt Nam.
+- **Tự động polling** mỗi 5 giây kiểm tra trạng thái thanh toán.
+- Khi Admin xác nhận → trang **tự động hiện thành công** + redirect đến đơn hàng.
 
-### 🔧 Admin
-- Dashboard thống kê doanh thu, đơn hàng, người dùng
-- Quản lý sản phẩm (CRUD), danh mục, thương hiệu
-- Quản lý đơn hàng: cập nhật trạng thái, **xác nhận thanh toán VietQR**
-- Quản lý người dùng: phân quyền, khoá tài khoản
+### 🔧 Quản trị viên (Admin)
+- **Dashboard thống kê:** Giao diện trực quan với **Biểu đồ doanh thu 6 tháng**, hiển thị top sản phẩm bán chạy, và quản lý các đơn hàng gần nhất.
+- **Quản lý Sản phẩm:** Thêm/sửa/xoá sản phẩm và **các biến thể dung tích/giá**.
+- **Quản lý Đơn hàng:** Cập nhật trạng thái đơn hàng và thanh toán, **xác nhận thanh toán VietQR**.
+- **Quản lý Danh mục & Thương hiệu (Brands).**
+- **Quản lý Người dùng:** Phân quyền hệ thống, xem trạng thái người dùng.
+- **Quản lý Blog (Tin tức):** Viết bài mới, tải lên ảnh thumbnail.
+- **Quản lý Đánh giá (Reviews):** Xem và xoá các đánh giá vi phạm từ khách hàng.
 
 ---
 
@@ -50,14 +58,22 @@ CosmeticsPro/
 │   │   ├── ProductController.php
 │   │   ├── OrderController.php
 │   │   ├── PaymentController.php   ← VietQR API
+│   │   ├── ProfileController.php   ← Avatar upload logic
 │   │   └── Admin/
+│   │       ├── DashboardController.php
+│   │       ├── ProductController.php
+│   │       ├── PostController.php  ← Quản lý bài viết
+│   │       └── ReviewController.php
+│   ├── app/Mail/
+│   │   └── OrderPlaced.php         ← Mailable xác nhận đặt hàng
 │   ├── app/Models/
 │   ├── app/Http/Resources/
+│   ├── resources/views/emails/     ← Blade template HTML Email
 │   ├── database/
 │   │   ├── migrations/
 │   │   └── seeders/DatabaseSeeder.php
 │   ├── routes/
-│   │   └── api.php
+│   │   └── api.php                 ← API Routes
 │   └── .env.example
 │
 └── frontend/                       ← React 19 + Vite
@@ -66,6 +82,8 @@ CosmeticsPro/
         │   ├── axiosClient.js      ← Axios + Bearer Token interceptor
         │   ├── productApi.js
         │   ├── orderApi.js
+        │   ├── postApi.js
+        │   ├── profileApi.js
         │   └── paymentApi.js       ← VietQR API calls
         ├── context/                ← AuthContext, CartContext, ToastContext
         ├── layouts/                ← MainLayout, AdminLayout
@@ -78,15 +96,19 @@ CosmeticsPro/
         │   │   ├── HomePage.jsx
         │   │   ├── ProductListPage.jsx
         │   │   ├── CheckoutPage.jsx
-        │   │   ├── VietQRPaymentPage.jsx  ← Trang thanh toán QR
+        │   │   ├── ProfilePage.jsx
+        │   │   ├── VietQRPaymentPage.jsx
         │   │   └── OrderDetailPage.jsx
         │   └── admin/
         │       ├── Dashboard.jsx
         │       ├── ProductManagement.jsx
-        │       └── OrderManagement.jsx
+        │       ├── OrderManagement.jsx
+        │       ├── PostManagement.jsx
+        │       └── ReviewManagement.jsx
         └── styles/
             ├── main.css
             ├── components.css
+            ├── admin.css           ← File CSS UI Admin Dashboard
             └── pages.css
 ```
 
@@ -137,7 +159,7 @@ cp .env.example .env
 
 #### 2.3. Chỉnh sửa file `.env`
 
-Mở file `backend/.env` và cập nhật thông tin:
+Mở file `backend/.env` và cập nhật thông tin Database, và Email (để gửi mail xác nhận đơn):
 
 ```env
 APP_NAME=HQCosmetic
@@ -152,15 +174,30 @@ DB_PASSWORD=                 # ← Password MySQL (để trống nếu dùng Lar
 
 FRONTEND_URL=http://localhost:5174
 SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:5174
+
+# --- CẤU HÌNH GMAIL GỬI EMAIL ĐẶT HÀNG ---
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME="youremail@gmail.com"  # Email của bạn
+MAIL_PASSWORD="xxyyzzkkmmnnaabb"     # Mật khẩu ứng dụng 16 số của Google (App Password)
+MAIL_FROM_ADDRESS="youremail@gmail.com"
+MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-#### 2.4. Tạo database
+#### 2.4. Khởi tạo Storage (cho Avatar & Ảnh bài viết)
+
+```bash
+php artisan storage:link
+```
+
+#### 2.5. Tạo database
 
 ```sql
 CREATE DATABASE HQCosmetic CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-#### 2.5. Generate App Key & chạy Migration + Seeder
+#### 2.6. Generate App Key & chạy Migration + Seeder
 
 ```bash
 php artisan key:generate
@@ -169,7 +206,7 @@ php artisan migrate:fresh --seed
 
 > Lệnh `--seed` sẽ tự động tạo **15 sản phẩm mẫu**, **8 thương hiệu**, **5 danh mục**, tài khoản admin và user mẫu.
 
-#### 2.6. Cấu hình VietQR (Thanh toán chuyển khoản)
+#### 2.7. Cấu hình VietQR (Thanh toán chuyển khoản)
 
 Mở file `backend/app/Http/Controllers/PaymentController.php` và thay thông tin ngân hàng của bạn:
 
@@ -182,7 +219,7 @@ private $bankConfig = [
 ];
 ```
 
-#### 2.7. Khởi động Backend
+#### 2.8. Khởi động Backend
 
 ```bash
 php artisan serve
@@ -238,7 +275,7 @@ npm run dev
 
 ---
 
-## 📡 API Endpoints
+## 📡 API Endpoints (Nổi bật)
 
 Base URL: `http://localhost:8000/api`
 
@@ -247,16 +284,14 @@ Base URL: `http://localhost:8000/api`
 | POST | `/auth/login` | Đăng nhập | ❌ |
 | POST | `/auth/register` | Đăng ký | ❌ |
 | GET | `/products` | Danh sách sản phẩm (filter, search, sort) | ❌ |
-| GET | `/products/featured` | Sản phẩm nổi bật | ❌ |
-| GET | `/products/{slug}` | Chi tiết sản phẩm | ❌ |
-| GET | `/categories` | Danh sách danh mục | ❌ |
-| GET | `/cart` | Xem giỏ hàng | ✅ |
-| POST | `/cart` | Thêm vào giỏ hàng | ✅ |
-| POST | `/orders` | Đặt hàng | ✅ |
+| GET | `/products/new-arrivals` | Lấy danh sách Sản phẩm mới | ❌ |
+| GET | `/products/{slug}/related` | Sản phẩm Gợi ý / Cùng bộ | ❌ |
+| POST | `/profile/avatar` | Đổi ảnh đại diện người dùng | ✅ |
+| POST | `/orders` | Đặt hàng (tự động gửi email + cập nhật kho) | ✅ |
 | POST | `/payment/vietqr` | Tạo QR thanh toán | ✅ |
 | GET | `/payment/status/{orderId}` | Kiểm tra trạng thái TT (polling) | ✅ |
 | POST | `/admin/payment/{orderId}/confirm` | Admin xác nhận đã nhận TT | ✅ Admin |
-| GET | `/admin/orders` | Danh sách đơn hàng (Admin) | ✅ Admin |
+| GET | `/admin/dashboard` | API thống kê biểu đồ doanh thu (Admin) | ✅ Admin |
 
 > Xem chi tiết trong [`backend/routes/api.php`](./backend/routes/api.php)
 
@@ -267,10 +302,9 @@ Base URL: `http://localhost:8000/api`
 ```
 Khách chọn "VietQR" → Nhấn Đặt hàng
         ↓
-Tự động redirect → /payment/vietqr/{orderId}
+Tự động gửi thư Xác nhận Đặt hàng → Chuyển hướng sang /payment/vietqr/{orderId}
         ↓
-Hiển thị mã QR + thông tin chuyển khoản
-(polling kiểm tra mỗi 5 giây)
+Hiển thị mã QR + thông tin chuyển khoản (polling kiểm tra mỗi 5 giây)
         ↓
 Khách mở app ngân hàng → Quét QR → Chuyển khoản
         ↓
@@ -310,7 +344,7 @@ Người dùng đăng nhập
        ↓
 POST /api/auth/login  →  Laravel trả về { token, user }
        ↓
-Frontend lưu token vào localStorage
+Frontend lưu token vào localStorage và Context
        ↓
 Mọi request tiếp theo tự động gửi: Authorization: Bearer {token}
        ↓
@@ -333,8 +367,8 @@ php artisan route:list
 # Xoá cache
 php artisan optimize:clear
 
-# Tạo Model + Migration + Controller + Resource
-php artisan make:model Product -mcr
+# Link public storage (quan trọng để hiện thị ảnh đại diện, ảnh blog)
+php artisan storage:link
 ```
 
 ### Frontend (React)

@@ -6,6 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Models\ShippingAddress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
@@ -23,6 +24,30 @@ class ProfileController extends Controller
         return response()->json([
             'message' => 'Cập nhật thông tin thành công',
             'user' => new UserResource($user)
+        ]);
+    }
+
+    public function uploadAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        $user = $request->user();
+
+        // Delete old avatar if exists
+        if ($user->avatar && str_starts_with($user->avatar, '/storage/')) {
+            $old = str_replace('/storage/', '', $user->avatar);
+            Storage::disk('public')->delete($old);
+        }
+
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $user->avatar = '/storage/' . $path;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Cập nhật ảnh đại diện thành công',
+            'user' => new UserResource($user),
         ]);
     }
 

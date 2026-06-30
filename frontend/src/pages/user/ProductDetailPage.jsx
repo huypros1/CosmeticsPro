@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 import StarRating from '../../components/StarRating';
+import ProductCard from '../../components/ProductCard';
 
 const formatPrice = (price) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -32,6 +33,7 @@ const ProductDetailPage = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [activeTab, setActiveTab] = useState('desc');
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     const fetch = async () => {
@@ -56,8 +58,12 @@ const ProductDetailPage = () => {
       reviewApi.getProductReviews(product.id)
         .then((d) => setReviews(d.data || d || []))
         .catch(() => {});
+      // Fetch related products
+      productApi.getRelatedProducts(slug)
+        .then((d) => setRelatedProducts(d.data || d || []))
+        .catch(() => {});
     }
-  }, [product?.id]);
+  }, [product?.id, slug]);
 
   const handleAddToCart = async () => {
     if (!user) { toast.warning('Vui lòng đăng nhập để thêm vào giỏ hàng'); return; }
@@ -411,6 +417,49 @@ const ProductDetailPage = () => {
             </div>
           )}
         </div>
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <section style={{ marginTop: 56 }}>
+            <div style={{ marginBottom: 28 }}>
+              <p className="text-label" style={{ marginBottom: 6 }}>Gợi ý cho bạn</p>
+              <h2 className="text-heading-lg">Sản phẩm bạn có thể thích</h2>
+            </div>
+            <div className="grid-products">
+              {relatedProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </section>
+        )}
+
+        {/* Suggested Set (same category cross-sell) */}
+        {relatedProducts.length >= 3 && (
+          <section style={{ margin: '48px 0 0', padding: '32px', background: 'var(--color-gray-50)', borderRadius: 20 }}>
+            <div style={{ marginBottom: 24 }}>
+              <p className="text-label" style={{ marginBottom: 6 }}>Complete the look</p>
+              <h2 className="text-heading-lg" style={{ fontSize: 22 }}>Gợi ý theo bộ</h2>
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, marginTop: 6 }}>Kết hợp các sản phẩm này cùng nhau để có hiệu quả tốt nhất</p>
+            </div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Current product */}
+              <div style={{ textAlign: 'center', width: 140 }}>
+                <div style={{ width: 140, height: 140, borderRadius: 12, overflow: 'hidden', border: '2px solid var(--color-accent)', marginBottom: 8 }}>
+                  <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)' }}>{product.name}</p>
+              </div>
+              {relatedProducts.slice(0, 2).map((p, i) => (
+                <>
+                  <div key={`plus-${i}`} style={{ fontSize: 24, color: 'var(--color-accent)', fontWeight: 700 }}>+</div>
+                  <Link key={p.id} to={`/products/${p.slug}`} style={{ textAlign: 'center', width: 140, textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ width: 140, height: 140, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--color-border)', marginBottom: 8 }}>
+                      <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <p style={{ fontSize: 12, fontWeight: 600 }}>{p.name}</p>
+                  </Link>
+                </>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
