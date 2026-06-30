@@ -154,7 +154,7 @@ composer install
 #### 2.2. Tạo file `.env`
 
 ```bash
-cp .env.example .env
+copy .env.example .env
 ```
 
 #### 2.3. Chỉnh sửa file `.env`
