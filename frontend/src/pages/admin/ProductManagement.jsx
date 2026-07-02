@@ -126,20 +126,19 @@ const ProductManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Xóa sản phẩm này?')) return;
+  const handleToggleStatus = async (product) => {
     try {
-      await adminApi.deleteProduct(id);
+      await adminApi.toggleProductStatus(product.id);
       fetchProducts(page);
     } catch {
-      alert('Không thể xóa sản phẩm');
+      alert('Không thể thay đổi trạng thái');
     }
   };
 
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 24 }}>Quản lý Sản phẩm</h1>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Sản phẩm</h1>
         <button className="btn btn-primary" onClick={openCreate}>+ Thêm sản phẩm</button>
       </div>
 
@@ -163,7 +162,7 @@ const ProductManagement = () => {
                   <td>#{p.id}</td>
                   <td>
                     {p.image
-                      ? <img src={p.image.startsWith('http') ? p.image : `http://localhost:8000${p.image}`} alt={p.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} />
+                      ? <img src={p.image.startsWith('http') ? p.image : `http://backend.test${p.image}`} alt={p.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} />
                       : <div style={{ width: 52, height: 52, background: 'var(--color-gray-100)', borderRadius: 8 }} />
                     }
                   </td>
@@ -182,8 +181,18 @@ const ProductManagement = () => {
                     </span>
                   </td>
                   <td>
-                    <button className="btn btn-ghost btn-sm" style={{ marginRight: 6 }} onClick={() => openEdit(p)}>Sửa</button>
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-error)' }} onClick={() => handleDelete(p.id)}>Xóa</button>
+                    <button className="action-btn action-btn-edit" style={{ marginRight: 6 }} onClick={() => openEdit(p)}>Sửa</button>
+                    <button
+                      className="action-btn"
+                      style={{
+                        background: p.status === 'active' ? '#f0fdf4' : '#f9fafb',
+                        color: p.status === 'active' ? '#166534' : '#6b7280',
+                        border: `1px solid ${p.status === 'active' ? '#bbf7d0' : '#e4e7ec'}`,
+                      }}
+                      onClick={() => handleToggleStatus(p)}
+                    >
+                      {p.status === 'active' ? 'Ẩn' : 'Hiện'}
+                    </button>
                   </td>
                 </tr>
               ))
@@ -253,7 +262,7 @@ const ProductManagement = () => {
               <div className="form-group" style={{ marginBottom: 24 }}>
                 <label className="form-label">Ảnh sản phẩm</label>
                 {imagePreview && (
-                  <img src={imagePreview.startsWith('http') ? imagePreview : `http://localhost:8000${imagePreview}`} alt="preview"
+                  <img src={imagePreview.startsWith('http') ? imagePreview : `http://backend.test${imagePreview}`} alt="preview"
                     style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
                 )}
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />

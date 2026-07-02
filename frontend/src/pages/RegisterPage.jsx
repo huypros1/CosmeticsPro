@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authApi } from '../api/authApi';
@@ -42,26 +42,8 @@ const RegisterPage = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-page__left">
-        <div className="auth-page__deco">
-          <div className="auth-page__deco-lines">
-            <span /><span /><span />
-          </div>
-          <div className="auth-page__deco-quote">
-            <p>"Mỗi ngày là một cơ hội để tỏa sáng với làn da của chính bạn."</p>
-            <span>— HQCosmetic</span>
-          </div>
-        </div>
-      </div>
-
       <div className="auth-page__right">
         <div className="auth-page__box">
-          <div className="auth-page__logo">
-            <Link to="/">
-              <span className="auth-logo-text">COSMETICS</span>
-              <span className="auth-logo-accent">PRO</span>
-            </Link>
-          </div>
 
           <div className="auth-page__header">
             <h1 className="auth-page__title">Đăng ký</h1>

@@ -12,7 +12,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8000/api/admin/users', {
+      const response = await axios.get('http://backend.test/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data.data);
@@ -26,7 +26,7 @@ const UserManagement = () => {
   const updateRole = async (id, newRole) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:8000/api/admin/users/${id}/role`, { role: newRole }, {
+      await axios.put(`http://backend.test/api/admin/users/${id}/role`, { role: newRole }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUsers();
@@ -38,7 +38,7 @@ const UserManagement = () => {
   const updateStatus = async (id, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:8000/api/admin/users/${id}/status`, { status: newStatus }, {
+      await axios.put(`http://backend.test/api/admin/users/${id}/status`, { status: newStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUsers();

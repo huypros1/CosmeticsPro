@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Order;
 use App\Models\User;
@@ -45,14 +46,20 @@ class DashboardController extends Controller
         }
 
         // Top selling products (by order items count)
-        $topProducts = \DB::table('order_items')
+        $topProducts = DB::table('order_items')
             ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
-            ->select('products.name', \DB::raw('SUM(order_items.quantity) as total_sold'))
+            ->select('products.name', DB::raw('SUM(order_items.quantity) as total_sold'))
             ->groupBy('products.id', 'products.name')
             ->orderByDesc('total_sold')
             ->limit(5)
             ->get();
+
+        // Orders count by status
+        $ordersByStatus = Order::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
 
         return response()->json([
             'stats' => [
@@ -63,6 +70,7 @@ class DashboardController extends Controller
                 'total_revenue'  => $totalRevenue,
                 'pending_orders' => $pendingOrders,
             ],
+            'orders_by_status' => $ordersByStatus,
             'recent_orders'  => $recentOrders,
             'monthly_sales'  => $monthlySales,
             'top_products'   => $topProducts,

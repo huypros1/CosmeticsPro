@@ -26,6 +26,7 @@ export const adminApi = {
   createProduct: (data) => axiosClient.post('/admin/products', data, auth()),
   updateProduct: (id, data) => axiosClient.post(`/admin/products/${id}?_method=PUT`, data, auth()),
   deleteProduct: (id) => axiosClient.delete(`/admin/products/${id}`, auth()),
+  toggleProductStatus: (id) => axiosClient.patch(`/admin/products/${id}/toggle-status`, {}, auth()),
 
   // Orders
   getOrders: (params) => axiosClient.get('/admin/orders', { ...auth(), params }),
@@ -48,4 +49,12 @@ export const adminApi = {
   // Reviews
   getReviews: (params) => axiosClient.get('/admin/reviews', { ...auth(), params }),
   deleteReview: (id) => axiosClient.delete(`/admin/reviews/${id}`, auth()),
+
+  // Flash Sales
+  getFlashSales: (params) => axiosClient.get('/admin/flash-sales', { ...auth(), params }),
+  getFlashSale: (id) => axiosClient.get(`/admin/flash-sales/${id}`, auth()),
+  createFlashSale: (data) => axiosClient.post('/admin/flash-sales', data, auth()),
+  updateFlashSale: (id, data) => axiosClient.put(`/admin/flash-sales/${id}`, data, auth()),
+  deleteFlashSale: (id) => axiosClient.delete(`/admin/flash-sales/${id}`, auth()),
+  toggleFlashSaleStatus: (id) => axiosClient.patch(`/admin/flash-sales/${id}/toggle-status`, {}, auth()),
 };

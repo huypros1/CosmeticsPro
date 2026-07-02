@@ -94,13 +94,17 @@ const PostManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Xóa bài viết này?')) return;
+  const handleToggleStatus = async (post) => {
+    const newStatus = post.status === 'published' ? 'draft' : 'published';
     try {
-      await adminApi.deletePost(id);
+      const fd = new FormData();
+      fd.append('title', post.title);
+      fd.append('content', post.content || '');
+      fd.append('status', newStatus);
+      await adminApi.updatePost(post.id, fd);
       fetchPosts(page);
     } catch {
-      alert('Không thể xóa bài viết');
+      alert('Không thể thay đổi trạng thái');
     }
   };
 
@@ -109,7 +113,7 @@ const PostManagement = () => {
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 24 }}>Quản lý Tin tức</h1>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Tin tức</h1>
         <button className="btn btn-primary" onClick={openCreate}>+ Thêm bài viết</button>
       </div>
 
@@ -139,7 +143,7 @@ const PostManagement = () => {
                   <td>#{post.id}</td>
                   <td>
                     {post.thumbnail
-                      ? <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://localhost:8000${post.thumbnail}`} alt={post.title} style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 6 }} />
+                      ? <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 6 }} />
                       : <div style={{ width: 60, height: 40, background: 'var(--color-gray-100)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📄</div>
                     }
                   </td>
@@ -153,8 +157,18 @@ const PostManagement = () => {
                   </td>
                   <td>{post.created_at ? formatDate(post.created_at) : '—'}</td>
                   <td>
-                    <button className="btn btn-ghost btn-sm" style={{ marginRight: 6 }} onClick={() => openEdit(post)}>Sửa</button>
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-error)' }} onClick={() => handleDelete(post.id)}>Xóa</button>
+                    <button className="action-btn action-btn-edit" style={{ marginRight: 6 }} onClick={() => openEdit(post)}>Sửa</button>
+                    <button
+                      className="action-btn"
+                      style={{
+                        background: post.status === 'published' ? '#f0fdf4' : '#fef9c3',
+                        color: post.status === 'published' ? '#166534' : '#92400e',
+                        border: `1px solid ${post.status === 'published' ? '#bbf7d0' : '#fde68a'}`,
+                      }}
+                      onClick={() => handleToggleStatus(post)}
+                    >
+                      {post.status === 'published' ? 'Rút xuống' : 'Đăng'}
+                    </button>
                   </td>
                 </tr>
               ))

@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\FlashSaleController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\DashboardController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Admin\FlashSaleController as AdminFlashSaleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +53,9 @@ Route::get('/posts/{slug}', [PostController::class, 'show']);
 
 // Vouchers
 Route::post('/vouchers/validate', [VoucherController::class, 'validateVoucher']);
+
+// Flash Sales (public)
+Route::get('/flash-sales/active', [FlashSaleController::class, 'active']);
 
 
 /*
@@ -116,6 +121,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     // Manage Products
     Route::apiResource('products', AdminProductController::class);
+    Route::patch('/products/{id}/toggle-status', [AdminProductController::class, 'toggleStatus']);
 
     // Manage Orders
     Route::get('/orders', [AdminOrderController::class, 'index']);
@@ -134,6 +140,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Manage Reviews
     Route::get('/reviews', [AdminReviewController::class, 'index']);
     Route::delete('/reviews/{id}', [AdminReviewController::class, 'destroy']);
+
+    // Manage Flash Sales
+    Route::apiResource('flash-sales', AdminFlashSaleController::class);
+    Route::patch('/flash-sales/{id}/toggle-status', [AdminFlashSaleController::class, 'toggleStatus']);
 
     // Payment Confirmation
     Route::post('/payment/{orderId}/confirm', [PaymentController::class, 'adminConfirmPayment']);

@@ -76,22 +76,12 @@ const CategoryManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Xóa danh mục này?')) return;
-    try {
-      await adminApi.deleteCategory(id);
-      fetchCategories(page);
-    } catch {
-      alert('Không thể xóa danh mục');
-    }
-  };
-
   const formatDate = (d) => new Date(d).toLocaleDateString('vi-VN');
 
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 24 }}>Quản lý Danh mục</h1>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Danh mục</h1>
         <button className="btn btn-primary" onClick={openCreate}>+ Thêm danh mục</button>
       </div>
 
@@ -120,7 +110,7 @@ const CategoryManagement = () => {
                   <td>#{cat.id}</td>
                   <td>
                     {cat.image
-                      ? <img src={cat.image.startsWith('http') ? cat.image : `http://localhost:8000${cat.image}`} alt={cat.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
+                      ? <img src={cat.image.startsWith('http') ? cat.image : `http://backend.test${cat.image}`} alt={cat.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
                       : <div style={{ width: 48, height: 48, background: 'var(--color-gray-100)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📂</div>
                     }
                   </td>
@@ -129,8 +119,7 @@ const CategoryManagement = () => {
                   <td style={{ color: 'var(--color-text-secondary)', maxWidth: 200 }}>{cat.description || '—'}</td>
                   <td>{cat.created_at ? formatDate(cat.created_at) : '—'}</td>
                   <td>
-                    <button className="btn btn-ghost btn-sm" style={{ marginRight: 6 }} onClick={() => openEdit(cat)}>Sửa</button>
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-error)' }} onClick={() => handleDelete(cat.id)}>Xóa</button>
+                    <button className="action-btn action-btn-edit" onClick={() => openEdit(cat)}>Sửa</button>
                   </td>
                 </tr>
               ))

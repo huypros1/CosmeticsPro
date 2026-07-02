@@ -11,10 +11,12 @@ import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import ProductManagement from './pages/admin/ProductManagement';
 import CategoryManagement from './pages/admin/CategoryManagement';
+import BrandManagement from './pages/admin/BrandManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 import UserManagement from './pages/admin/UserManagement';
 import PostManagement from './pages/admin/PostManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
+import FlashSaleManagement from './pages/admin/FlashSaleManagement';
 
 // Auth Pages
 import LoginPage from './pages/LoginPage';
@@ -70,12 +72,12 @@ const App = () => {
         <CartProvider>
           <ToastProvider>
             <Routes>
-              {/* Auth */}
-              <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-              <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
-
               {/* User / Main */}
               <Route element={<MainLayout />}>
+                {/* Auth */}
+                <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+                <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+                
                 <Route path="/" element={<HomePage />} />
                 <Route path="/products" element={<ProductListPage />} />
                 <Route path="/products/:slug" element={<ProductDetailPage />} />
@@ -102,9 +104,11 @@ const App = () => {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="products" element={<ProductManagement />} />
                 <Route path="categories" element={<CategoryManagement />} />
+                <Route path="brands" element={<BrandManagement />} />
                 <Route path="orders" element={<OrderManagement />} />
                 <Route path="posts" element={<PostManagement />} />
                 <Route path="reviews" element={<ReviewManagement />} />
+                <Route path="flash-sales" element={<FlashSaleManagement />} />
                 <Route path="users" element={<UserManagement />} />
               </Route>
 

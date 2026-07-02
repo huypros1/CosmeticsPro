@@ -34,7 +34,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'is_featured' => 'boolean',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,inactive,0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'variants' => 'nullable|array', // Optional variants
         ]);
@@ -89,7 +89,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'is_featured' => 'boolean',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,inactive,0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -122,5 +122,16 @@ class ProductController extends Controller
         // Product variants and images should cascade on delete or be soft deleted depending on migration setup
         $product->delete();
         return response()->json(['message' => 'Product deleted']);
+    }
+    public function toggleStatus($id)
+    {
+        $product = Product::findOrFail($id);
+        $product->status = $product->status === 'active' ? '0' : 'active';
+        $product->save();
+
+        return response()->json([
+            'message' => 'Status updated',
+            'status'  => $product->status,
+        ]);
     }
 }
