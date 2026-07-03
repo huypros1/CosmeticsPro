@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\Storage;
 
 class BrandController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Brand::latest()->paginate(10);
+        $query = Brand::latest();
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        return $query->paginate(10);
     }
 
     public function store(Request $request)

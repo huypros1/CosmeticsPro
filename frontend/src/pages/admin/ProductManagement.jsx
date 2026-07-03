@@ -23,26 +23,46 @@ const ProductManagement = () => {
   const [variants, setVariants] = useState([{ capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [brandFilter, setBrandFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const fileRef = useRef();
 
   const fetchProducts = async (p = 1) => {
     try {
       setLoading(true);
-      const res = await adminApi.getProducts({ page: p });
-      setProducts(res.data.data || res.data || []);
-      setMeta(res.data.meta || {});
-    } catch {
-      console.error('Error fetching products');
+      const res = await adminApi.getProducts({ 
+        page: p, 
+        search, 
+        category_id: categoryFilter, 
+        brand_id: brandFilter, 
+        status: statusFilter 
+      });
+      console.log('[Products] res:', res, 'res.data:', res?.data);
+      const list = Array.isArray(res) ? res : (res?.data || []);
+      console.log('[Products] list:', list, 'length:', list.length);
+      setProducts(list);
+      setMeta({ current_page: res?.current_page ?? 1, last_page: res?.last_page ?? 1 });
+    } catch (err) {
+      console.error('[Products] Error fetching products:', err?.response?.status, err?.message, err?.response?.data);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts(page);
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts(page);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, search, categoryFilter, brandFilter, statusFilter]);
+
+  useEffect(() => {
     productApi.getCategories().then(d => setCategories(d.data || d || [])).catch(() => {});
     productApi.getBrands().then(d => setBrands(d.data || d || [])).catch(() => {});
-  }, [page]);
+  }, []);
 
   const openCreate = () => {
     setEditItem(null);
@@ -138,10 +158,52 @@ const ProductManagement = () => {
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Sản phẩm</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ Thêm sản phẩm</button>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Sản phẩm</h1>
+        <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+          Thêm Sản phẩm
+        </button>
       </div>
 
+      {/* ── Filters ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Tìm tên sản phẩm..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '250px' }}
+        />
+        <select
+          value={categoryFilter}
+          onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '180px' }}
+        >
+          <option value="">Tất cả Danh mục</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select
+          value={brandFilter}
+          onChange={(e) => { setBrandFilter(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '180px' }}
+        >
+          <option value="">Tất cả Thương hiệu</option>
+          {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '160px' }}
+        >
+          <option value="">Tất cả Trạng thái</option>
+          <option value="active">Đang bán</option>
+          <option value="inactive">Ngừng bán</option>
+        </select>
+      </div>
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <table className="admin-table">
           <thead>

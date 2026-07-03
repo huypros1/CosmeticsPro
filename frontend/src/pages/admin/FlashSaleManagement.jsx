@@ -4,12 +4,13 @@ import { adminApi } from '../../api/adminApi';
 const FlashSaleManagement = () => {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({});
-
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({});
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const [form, setForm] = useState({
     name: '',
@@ -25,24 +26,39 @@ const FlashSaleManagement = () => {
   const fetchSales = async (p = 1) => {
     try {
       setLoading(true);
-      const res = await adminApi.getFlashSales({ page: p });
-      setSales(res.data.data);
-      setMeta({ current_page: res.data.current_page, last_page: res.data.last_page });
+      const res = await adminApi.getFlashSales({ page: p, search, status: statusFilter });
+      // res.data is the Laravel paginate object: { data: [...], current_page, last_page }
+      const payload = res.data;
+      const list = payload?.data ?? payload;
+      setSales(Array.isArray(list) ? list : []);
+      setMeta({
+        current_page: payload?.current_page ?? 1,
+        last_page: payload?.last_page ?? 1,
+      });
     } catch (err) {
-      console.error(err);
+      console.error('fetchSales error:', err);
+      setSales([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchSales(page); }, [page]);
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchSales(page);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, search, statusFilter]);
 
   const fetchProducts = async (search = '') => {
     try {
       const res = await adminApi.getProducts({ search, per_page: 50 });
-      setProducts(res.data.data);
+      // Handle multiple response shapes
+      const data = res.data?.data || res.data || [];
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.error('fetchProducts error:', err);
+      setProducts([]);
     }
   };
 
@@ -79,30 +95,38 @@ const FlashSaleManagement = () => {
     setEditItem(sale);
     try {
       const res = await adminApi.getFlashSale(sale.id);
-      const fullSale = res.data;
-      // format datetime for input[type="datetime-local"]
+      // Backend returns the object directly (no wrapper), axios wraps in res.data
+      const fullSale = res.data?.data || res.data || {};
+
       const formatDT = (dateString) => {
         if (!dateString) return '';
         const d = new Date(dateString);
         return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       };
 
+      // items may be named 'items' or 'flash_sale_items'
+      const rawItems = fullSale?.items || fullSale?.flash_sale_items || [];
+
       setForm({
-        name: fullSale.name,
-        start_time: formatDT(fullSale.start_time),
-        end_time: formatDT(fullSale.end_time),
-        status: fullSale.status,
-        items: fullSale.items.map(i => ({
+        name: fullSale?.name || '',
+        start_time: formatDT(fullSale?.start_time),
+        end_time: formatDT(fullSale?.end_time),
+        status: fullSale?.status || 'active',
+        items: rawItems.map(i => ({
           product_id: i.product_id,
           product_variant_id: i.product_variant_id,
           sale_price: i.sale_price,
-          quantity: i.quantity,
-          _temp_name: i.product?.name,
+          quantity: i.quantity ?? 0,
+          _temp_name: i.product?.name || `Sản phẩm #${i.product_id}`,
+          _temp_variant: i.variant?.capacity
+            ? `${i.variant.capacity.value}${i.variant.capacity.unit}`
+            : (i.product_variant_id ? `Variant #${i.product_variant_id}` : ''),
         })),
       });
       setShowModal(true);
-    } catch {
-      alert('Không thể tải thông tin');
+    } catch (err) {
+      console.error('openEdit error:', err?.response?.data || err.message || err);
+      alert(`Không thể tải thông tin flash sale: ${err?.response?.status || ''} ${err?.response?.data?.message || err.message || ''}`);
     }
   };
 
@@ -127,18 +151,21 @@ const FlashSaleManagement = () => {
     }
   };
 
-  const addItem = (product) => {
-    if (form.items.find(i => i.product_id === product.id)) {
-      return alert('Sản phẩm đã có trong danh sách');
+  // Add a specific variant as a flash sale item
+  const addVariantItem = (product, variant) => {
+    if (form.items.find(i => i.product_variant_id === variant.id)) {
+      return alert('Biến thể này đã có trong danh sách');
     }
+    const capacityLabel = variant.capacity ? `${variant.capacity.value}${variant.capacity.unit}` : `ID: ${variant.id}`;
     setForm(prev => ({
       ...prev,
       items: [...prev.items, {
         product_id: product.id,
-        product_variant_id: null,
-        sale_price: '',
+        product_variant_id: variant.id,
+        sale_price: variant.sale_price || variant.price || '',
         quantity: '',
         _temp_name: product.name,
+        _temp_variant: capacityLabel,
       }]
     }));
   };
@@ -160,8 +187,33 @@ const FlashSaleManagement = () => {
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Flash Sale</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ Tạo Flash Sale</button>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Flash Sale</h1>
+        <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+          Thêm Chương trình
+        </button>
+      </div>
+
+      {/* ── Filters ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Tìm tên chương trình..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '300px' }}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '200px' }}
+        >
+          <option value="">Tất cả Trạng thái</option>
+          <option value="active">Hoạt động (Active)</option>
+          <option value="inactive">Đã Tắt (Inactive)</option>
+        </select>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
@@ -184,7 +236,7 @@ const FlashSaleManagement = () => {
                   <td key={j}><div className="skeleton" style={{ height: 16, borderRadius: 4 }} /></td>
                 ))}</tr>
               ))
-              : sales.map(sale => (
+              : (sales || []).map(sale => (
                 <tr key={sale.id}>
                   <td>#{sale.id}</td>
                   <td style={{ fontWeight: 600 }}>{sale.name}</td>
@@ -210,7 +262,7 @@ const FlashSaleManagement = () => {
                 </tr>
               ))
             }
-            {!loading && sales.length === 0 && (
+            {!loading && (sales || []).length === 0 && (
               <tr><td colSpan="7" style={{ textAlign: 'center', padding: 32, color: '#9ca3af' }}>Chưa có flash sale nào</td></tr>
             )}
           </tbody>
@@ -257,15 +309,19 @@ const FlashSaleManagement = () => {
                     <thead>
                       <tr>
                         <th>Sản phẩm</th>
+                        <th>Biến thể</th>
                         <th>Giá Sale (đ)</th>
-                        <th>Số lượng (0=ko giới hạn)</th>
+                        <th>SL (0=vô hạn)</th>
                         <th>Xóa</th>
                       </tr>
                     </thead>
                     <tbody>
                       {form.items.map((item, index) => (
                         <tr key={index}>
-                          <td>{item._temp_name}</td>
+                          <td style={{ fontWeight: 500 }}>{item._temp_name}</td>
+                          <td style={{ color: '#6b7280', fontSize: 13 }}>
+                            {item._temp_variant || '—'}
+                          </td>
                           <td>
                             <input required type="number" min="0" className="form-input" style={{ padding: '6px 12px' }} value={item.sale_price} onChange={e => updateItem(index, 'sale_price', e.target.value)} />
                           </td>
@@ -273,7 +329,7 @@ const FlashSaleManagement = () => {
                             <input type="number" min="0" className="form-input" style={{ padding: '6px 12px' }} value={item.quantity} onChange={e => updateItem(index, 'quantity', e.target.value)} />
                           </td>
                           <td>
-                            <button type="button" className="action-btn action-btn-danger" onClick={() => removeItem(index)}>X</button>
+                            <button type="button" className="action-btn action-btn-danger" onClick={() => removeItem(index)}>✕</button>
                           </td>
                         </tr>
                       ))}
@@ -282,18 +338,84 @@ const FlashSaleManagement = () => {
                 )}
 
                 <div>
-                  <label className="form-label">Thêm sản phẩm (Tìm kiếm)</label>
-                  <input className="form-input" placeholder="Nhập tên sản phẩm..." value={searchProduct} onChange={handleSearchProduct} style={{ marginBottom: 12 }} />
+                  <label className="form-label">Chọn sản phẩm & biến thể</label>
+                  <input
+                    className="form-input"
+                    placeholder="Tìm kiếm sản phẩm..."
+                    value={searchProduct}
+                    onChange={handleSearchProduct}
+                    style={{ marginBottom: 12 }}
+                  />
                   
-                  <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-                    {products.map(p => (
-                      <div key={p.id} style={{ padding: '8px 12px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{p.name} (Giá gốc: {Number(p.price || 0).toLocaleString()}đ)</span>
-                        <button type="button" className="btn btn-sm" style={{ background: '#f3f4f6', color: '#111827', padding: '4px 12px', borderRadius: 4 }} onClick={() => addItem(p)}>Thêm</button>
+                  <div style={{ maxHeight: 300, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 10, background: '#fafafa' }}>
+                    {(products || []).length === 0 && (
+                      <div style={{ padding: 24, color: '#9ca3af', textAlign: 'center' }}>
+                        Không tìm thấy sản phẩm nào
                       </div>
-                    ))}
-                    {products.length === 0 && <div style={{ padding: 12, color: '#6b7280', textAlign: 'center' }}>Không tìm thấy sản phẩm</div>}
+                    )}
+                    {(products || []).map(p => {
+                      // Get first image from first variant or product
+                      const imgUrl = p.image || p.variants?.[0]?.images?.[0] || null;
+                      return (
+                        <div key={p.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                          {/* Product header row */}
+                          <div style={{ padding: '10px 14px', background: '#f3f4f6', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {imgUrl ? (
+                              <img src={imgUrl} alt={p.name} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 40, height: 40, background: '#e5e7eb', borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 18 }}>🖼</div>
+                            )}
+                            <span style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>{p.name}</span>
+                          </div>
+                          {/* Variants with checkboxes */}
+                          {(p.variants || []).length > 0 ? (
+                            (p.variants || []).map(v => {
+                              const capacityLabel = v.capacity ? `${v.capacity.value}${v.capacity.unit}` : `Biến thể #${v.id}`;
+                              const alreadyAdded = form.items.some(i => i.product_variant_id === v.id);
+                              return (
+                                <div key={v.id} style={{
+                                  padding: '8px 14px 8px 24px',
+                                  borderTop: '1px solid #f3f4f6',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 10,
+                                  background: alreadyAdded ? '#f0fdf4' : '#fff',
+                                  transition: 'background 0.15s',
+                                }}>
+                                  <input
+                                    type="checkbox"
+                                    id={`v-${v.id}`}
+                                    checked={alreadyAdded}
+                                    onChange={() => alreadyAdded
+                                      ? setForm(prev => ({ ...prev, items: prev.items.filter(i => i.product_variant_id !== v.id) }))
+                                      : addVariantItem(p, v)
+                                    }
+                                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#C9956A', flexShrink: 0 }}
+                                  />
+                                  <label htmlFor={`v-${v.id}`} style={{ flex: 1, cursor: 'pointer', fontSize: 13 }}>
+                                    <span style={{ fontWeight: 500, color: '#374151' }}>📦 {capacityLabel}</span>
+                                    <span style={{ color: '#6b7280', marginLeft: 8 }}>
+                                      Giá gốc: {Number(v.sale_price || v.price || 0).toLocaleString()}đ
+                                    </span>
+                                  </label>
+                                  {alreadyAdded && (
+                                    <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 500 }}>✓ Đã chọn</span>
+                                  )}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div style={{ padding: '8px 24px', fontSize: 12, color: '#9ca3af' }}>Không có biến thể</div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+                  {form.items.length > 0 && (
+                    <p style={{ fontSize: 13, color: '#C9956A', marginTop: 8, fontWeight: 500 }}>
+                      ✓ Đã chọn {form.items.length} biến thể — nhập giá Sale và số lượng ở bảng trên
+                    </p>
+                  )}
                 </div>
               </div>
 

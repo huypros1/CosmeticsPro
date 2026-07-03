@@ -8,6 +8,7 @@ import { cartApi } from '../../api/cartApi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
+import AddressFormFields from '../../components/AddressFormFields';
 
 const formatPrice = (p) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
@@ -200,6 +201,7 @@ const ProfilePage = () => {
   const [addingAddr, setAddingAddr] = useState(false);
   const [showAddAddr, setShowAddAddr] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [addressLine, setAddressLine] = useState('');
   const avatarInputRef = useRef();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -258,11 +260,19 @@ const ProfilePage = () => {
   };
 
   const onAddAddress = async (data) => {
+    if (!addressLine.trim()) {
+      toast.warning('Vui lòng chọn đầy đủ tỉnh/thành, quận/huyện, phường/xã và nhập số nhà');
+      return;
+    }
     try {
       setAddingAddr(true);
-      const res = await profileApi.addAddress(data);
+      const res = await profileApi.addAddress({
+        address_line: addressLine,
+        phone: data.phone,
+      });
       setAddresses((prev) => [...prev, res.address || res]);
       setShowAddAddr(false);
+      setAddressLine('');
       resetAddr();
       toast.success('Thêm địa chỉ thành công');
     } catch { toast.error('Không thể thêm địa chỉ'); }
@@ -403,21 +413,22 @@ const ProfilePage = () => {
 
                 {showAddAddr && (
                   <form onSubmit={handleAddr(onAddAddress)} className="add-address-form" style={{ marginBottom: 24 }}>
+                    <AddressFormFields onAddressChange={setAddressLine} />
                     <div className="form-group">
-                      <label className="form-label">Địa chỉ</label>
-                      <input className="form-input" placeholder="Số nhà, đường, phường, quận, tỉnh"
-                        {...regAddr('address_line', { required: true })} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Số điện thoại</label>
+                      <label className="form-label">Số điện thoại <span style={{ color: 'var(--color-error)' }}>*</span></label>
                       <input className="form-input" placeholder="0909 123 456" type="tel"
                         {...regAddr('phone', { required: true })} />
                     </div>
+                    {addressLine && (
+                      <div style={{ padding: '10px 14px', background: 'var(--color-gray-50)', borderRadius: 'var(--radius-sm)', marginBottom: 12, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                        <strong>Địa chỉ:</strong> {addressLine}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button type="submit" className="btn btn-primary btn-sm" disabled={addingAddr}>
                         {addingAddr ? 'Đang lưu...' : 'Lưu'}
                       </button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowAddAddr(false)}>Hủy</button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setShowAddAddr(false); setAddressLine(''); }}>Hủy</button>
                     </div>
                   </form>
                 )}

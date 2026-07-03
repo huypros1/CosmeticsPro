@@ -13,7 +13,7 @@ use App\Models\Review;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Basic stats
         $totalUsers    = User::count();
@@ -30,19 +30,47 @@ class DashboardController extends Controller
         // Recent orders (last 10)
         $recentOrders = Order::with('user')->latest()->take(10)->get();
 
-        // Monthly sales for chart (last 6 months)
-        $monthlySales = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $sales = Order::whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->where('status', '!=', 'cancelled')
-                ->sum('total_amount');
+        $timeframe = $request->get('timeframe', 'year'); // week, month, year
+        $chartData = [];
 
-            $monthlySales[] = [
-                'month' => $month->format('M Y'),
-                'sales' => $sales,
-            ];
+        if ($timeframe === 'week') {
+            // Last 7 days
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $sales = Order::whereDate('created_at', $date->format('Y-m-d'))
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('total_amount');
+                $chartData[] = [
+                    'label' => $date->format('d/m'),
+                    'sales' => (float) $sales,
+                ];
+            }
+        } elseif ($timeframe === 'month') {
+            // Last 30 days (grouped by chunks, or just 30 days. Let's do 30 days every 3 days maybe? Or just 30 days straight)
+            // 30 days is okay for a chart, but maybe last 4 weeks is better. Let's just do last 30 days.
+            for ($i = 29; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $sales = Order::whereDate('created_at', $date->format('Y-m-d'))
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('total_amount');
+                $chartData[] = [
+                    'label' => $date->format('d/m'),
+                    'sales' => (float) $sales,
+                ];
+            }
+        } else {
+            // Year: last 12 months
+            for ($i = 11; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $sales = Order::whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('total_amount');
+                $chartData[] = [
+                    'label' => $month->format('m/Y'),
+                    'sales' => (float) $sales,
+                ];
+            }
         }
 
         // Top selling products (by order items count)
@@ -72,7 +100,7 @@ class DashboardController extends Controller
             ],
             'orders_by_status' => $ordersByStatus,
             'recent_orders'  => $recentOrders,
-            'monthly_sales'  => $monthlySales,
+            'chart_data'     => $chartData,
             'top_products'   => $topProducts,
         ]);
     }

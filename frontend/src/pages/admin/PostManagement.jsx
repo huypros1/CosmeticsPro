@@ -12,6 +12,9 @@ const PostManagement = () => {
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [form, setForm] = useState({ title: '', content: '', status: 'draft', category_post_id: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -20,9 +23,9 @@ const PostManagement = () => {
   const fetchPosts = async (p = 1) => {
     try {
       setLoading(true);
-      const res = await adminApi.getPosts({ page: p });
-      setPosts(res.data.data || res.data || []);
-      setMeta(res.data.meta || {});
+      const res = await adminApi.getPosts({ page: p, search, status: statusFilter, category_post_id: categoryFilter });
+      setPosts(res?.data || (Array.isArray(res) ? res : []));
+      setMeta(res?.meta || { current_page: res?.current_page, last_page: res?.last_page } || {});
     } catch {
       console.error('Error fetching posts');
     } finally {
@@ -37,7 +40,12 @@ const PostManagement = () => {
     } catch { }
   };
 
-  useEffect(() => { fetchPosts(page); }, [page]);
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchPosts(page);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, search, statusFilter, categoryFilter]);
   useEffect(() => { fetchCategories(); }, []);
 
   const openCreate = () => {
@@ -113,8 +121,42 @@ const PostManagement = () => {
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Tin tức</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ Thêm bài viết</button>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Bài viết</h1>
+        <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+          Thêm Bài viết
+        </button>
+      </div>
+
+      {/* ── Filters ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Tìm tiêu đề..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '300px' }}
+        />
+        <select
+          value={categoryFilter}
+          onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '200px' }}
+        >
+          <option value="">Tất cả Danh mục</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '200px' }}
+        >
+          <option value="">Tất cả Trạng thái</option>
+          <option value="published">Đã đăng</option>
+          <option value="draft">Bản nháp</option>
+        </select>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>

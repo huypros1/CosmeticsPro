@@ -7,7 +7,7 @@ const auth = () => ({
 
 export const adminApi = {
   // Dashboard
-  getDashboard: () => axiosClient.get('/admin/dashboard', auth()),
+  getDashboard: (params) => axiosClient.get('/admin/dashboard', { ...auth(), params }),
 
   // Categories
   getCategories: (params) => axiosClient.get('/admin/categories', { ...auth(), params }),

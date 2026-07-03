@@ -17,10 +17,13 @@ import UserManagement from './pages/admin/UserManagement';
 import PostManagement from './pages/admin/PostManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
 import FlashSaleManagement from './pages/admin/FlashSaleManagement';
+import ReadLog from './pages/admin/ReadLog';
 
 // Auth Pages
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 
 // User Pages
 import HomePage from './pages/user/HomePage';
@@ -77,6 +80,8 @@ const App = () => {
                 {/* Auth */}
                 <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
                 <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+                <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+                <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
                 
                 <Route path="/" element={<HomePage />} />
                 <Route path="/products" element={<ProductListPage />} />
@@ -110,6 +115,7 @@ const App = () => {
                 <Route path="reviews" element={<ReviewManagement />} />
                 <Route path="flash-sales" element={<FlashSaleManagement />} />
                 <Route path="users" element={<UserManagement />} />
+                <Route path="read-log" element={<ReadLog />} />
               </Route>
 
               {/* 404 */}

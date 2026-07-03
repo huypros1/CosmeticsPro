@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { adminApi } from '../../api/adminApi';
+import { paymentApi } from '../../api/paymentApi';
 import { Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -63,21 +64,45 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [timeframe, setTimeframe] = useState('year'); // 'week', 'month', 'year'
+  const [confirmingId, setConfirmingId] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await adminApi.getDashboard({ timeframe });
+      setStats(res);
+    } catch (err) {
+      console.error('Dashboard error', err);
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        setError('__AUTH__');
+      } else {
+        setError(err?.response?.data?.message || err?.message || 'Lỗi không xác định');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    adminApi.getDashboard()
-      .then(res => setStats(res))
-      .catch(err => {
-        console.error('Dashboard error', err);
-        const status = err?.response?.status;
-        if (status === 401 || status === 403) {
-          setError('__AUTH__');
-        } else {
-          setError(err?.response?.data?.message || err?.message || 'Lỗi không xác định');
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    fetchData();
+  }, [timeframe]);
+
+  const confirmPayment = async (id) => {
+    if (!window.confirm(`Xác nhận đơn hàng #${id} đã nhận được thanh toán?`)) return;
+    try {
+      setConfirmingId(id);
+      await paymentApi.adminConfirmPayment(id);
+      fetchData();
+      alert(`✅ Đã xác nhận thanh toán cho đơn hàng #${id}`);
+    } catch (error) {
+      console.error('Error confirming payment', error);
+      alert('Có lỗi xảy ra khi xác nhận thanh toán');
+    } finally {
+      setConfirmingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -115,14 +140,14 @@ const Dashboard = () => {
     );
   }
 
-  const { stats: s, recent_orders, monthly_sales, orders_by_status } = stats;
+  const { stats: s, recent_orders, chart_data, orders_by_status } = stats;
 
   /* ── Chart.js data ── */
-  const months = (monthly_sales || []).map(d => d.month);
-  const salesData = (monthly_sales || []).map(d => d.sales);
+  const chartLabels = (chart_data || []).map(d => d.label);
+  const salesData = (chart_data || []).map(d => d.sales);
 
   const lineChartData = {
-    labels: months,
+    labels: chartLabels,
     datasets: [{
       label: 'Doanh thu (VND)',
       data: salesData,
@@ -260,18 +285,26 @@ const Dashboard = () => {
       </div>
 
       {/* ── Charts Row ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, marginBottom: 24, alignItems: 'stretch' }}>
         {/* Line Chart — Revenue */}
-        <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+        <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#111827' }}>Doanh thu theo tháng</h2>
-              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9ca3af' }}>6 tháng gần nhất</p>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#111827' }}>Biểu đồ doanh thu</h2>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9ca3af' }}>Lọc theo: Tuần/Tháng/Năm</p>
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', background: '#eef2ff', padding: '4px 12px', borderRadius: 20, letterSpacing: '0.04em' }}>DOANH THU</div>
+            <select 
+              value={timeframe} 
+              onChange={e => setTimeframe(e.target.value)}
+              style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #e5e7eb', outline: 'none', fontSize: 13, background: '#f9fafb', color: '#374151', cursor: 'pointer' }}
+            >
+              <option value="week">7 ngày qua</option>
+              <option value="month">30 ngày qua</option>
+              <option value="year">12 tháng qua</option>
+            </select>
           </div>
-          <div style={{ padding: '20px', height: 260 }}>
-            {months.length > 0
+          <div style={{ padding: '20px', height: 260, flex: 1 }}>
+            {chartLabels.length > 0
               ? <Line data={lineChartData} options={lineChartOptions} />
               : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 13 }}>Chưa có dữ liệu</div>
             }
@@ -363,13 +396,33 @@ const Dashboard = () => {
                     </span>
                   </td>
                   <td>
-                    <span style={{
-                      display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                      background: order.payment_status === 'paid' ? '#d1fae5' : '#fef3c7',
-                      color: order.payment_status === 'paid' ? '#065f46' : '#92400e',
-                    }}>
-                      {order.payment_status === 'paid' ? '✓ Đã TT' : '⏳ Chờ TT'}
-                    </span>
+                    {order.payment_status !== 'paid' && order.status !== 'cancelled' ? (
+                      <button
+                        onClick={() => confirmPayment(order.id)}
+                        disabled={confirmingId === order.id}
+                        style={{
+                          padding: '4px 10px',
+                          background: confirmingId === order.id ? '#94a3b8' : '#10b981',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: confirmingId === order.id ? 'wait' : 'pointer',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {confirmingId === order.id ? '...' : `✓ Nhận TT (${order.payment_method === 'vietqr' ? 'QR' : 'COD'})`}
+                      </button>
+                    ) : (
+                      <span style={{
+                        display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                        background: order.payment_status === 'paid' ? '#d1fae5' : '#f3f4f6',
+                        color: order.payment_status === 'paid' ? '#065f46' : '#9ca3af',
+                      }}>
+                        {order.payment_status === 'paid' ? '✓ Đã TT' : 'Đã hủy'}
+                      </span>
+                    )}
                   </td>
                   <td style={{ color: '#6b7280', fontSize: 13 }}>{formatDate(order.created_at)}</td>
                 </tr>

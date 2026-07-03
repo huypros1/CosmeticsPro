@@ -8,6 +8,7 @@ const BrandManagement = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
+  const [search, setSearch] = useState('');
 
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -20,9 +21,9 @@ const BrandManagement = () => {
   const fetchBrands = async (p = 1) => {
     try {
       setLoading(true);
-      const res = await adminApi.getBrands({ page: p, per_page: 10 });
-      setBrands(res.data.data || res.data || []);
-      setMeta(res.data.meta || { current_page: res.data.current_page, last_page: res.data.last_page });
+      const res = await adminApi.getBrands({ page: p, search, per_page: 10 });
+      setBrands(res?.data || (Array.isArray(res) ? res : []));
+      setMeta(res?.meta || { current_page: res?.current_page, last_page: res?.last_page } || {});
     } catch {
       console.error('Error fetching brands');
     } finally {
@@ -30,7 +31,12 @@ const BrandManagement = () => {
     }
   };
 
-  useEffect(() => { fetchBrands(page); }, [page]);
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchBrands(page);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, search]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -89,6 +95,18 @@ const BrandManagement = () => {
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>Thêm, sửa logo và thông tin thương hiệu</p>
         </div>
         <button className="btn btn-primary" onClick={openCreate}>+ Thêm thương hiệu</button>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
+        <input
+          type="text"
+          placeholder="Tìm tên thương hiệu..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '300px' }}
+        />
       </div>
 
       {/* Grid */}

@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Category::latest()->paginate(10);
+        $query = Category::latest();
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        return $query->paginate(10);
     }
 
     public function store(Request $request)

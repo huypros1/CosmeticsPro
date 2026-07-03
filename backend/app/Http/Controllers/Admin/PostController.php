@@ -23,6 +23,10 @@ class PostController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('category_post_id')) {
+            $query->where('category_post_id', $request->category_post_id);
+        }
+
         return $query->paginate(10);
     }
 

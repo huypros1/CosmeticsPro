@@ -8,15 +8,16 @@ const ReviewManagement = () => {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
   const [filterRating, setFilterRating] = useState('');
+  const [search, setSearch] = useState('');
 
   const fetchReviews = async (p = 1) => {
     try {
       setLoading(true);
-      const params = { page: p };
+      const params = { page: p, search };
       if (filterRating) params.rating = filterRating;
       const res = await adminApi.getReviews(params);
-      setReviews(res.data.data || res.data || []);
-      setMeta(res.data.meta || {});
+      setReviews(res?.data || (Array.isArray(res) ? res : []));
+      setMeta(res?.meta || { current_page: res?.current_page, last_page: res?.last_page } || {});
     } catch {
       console.error('Error fetching reviews');
     } finally {
@@ -24,21 +25,40 @@ const ReviewManagement = () => {
     }
   };
 
-  useEffect(() => { fetchReviews(page); }, [page, filterRating]);
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchReviews(page);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, filterRating, search]);
 
   const formatDate = (d) => new Date(d).toLocaleDateString('vi-VN');
 
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Đánh giá</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <label style={{ fontSize: 13, color: '#6b7280' }}>Lọc: </label>
-          <select className="form-select" style={{ width: 120 }} value={filterRating} onChange={e => { setFilterRating(e.target.value); setPage(1); }}>
-            <option value="">Tất cả</option>
-            {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{r} sao</option>)}
-          </select>
-        </div>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Đánh giá</h1>
+      </div>
+
+      {/* ── Filters ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Tìm nội dung, tên KH, sản phẩm..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '300px' }}
+        />
+        <select
+          value={filterRating}
+          onChange={(e) => { setFilterRating(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '180px' }}
+        >
+          <option value="">Tất cả Số sao</option>
+          {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{r} sao</option>)}
+        </select>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>

@@ -7,19 +7,21 @@ const CategoryManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '' });
+  const [form, setForm] = useState({ name: '', description: '', parent_id: '' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
+  const [search, setSearch] = useState('');
   const fileRef = useRef();
 
   const fetchCategories = async (p = 1) => {
     try {
       setLoading(true);
-      const res = await adminApi.getCategories({ page: p, per_page: 10 });
-      setCategories(res.data.data || res.data || []);
-      setMeta(res.data.meta || {});
+      // axiosClient returns response.data directly (res = paginate object)
+      const res = await adminApi.getCategories({ page: p, search, per_page: 10 });
+      setCategories(res?.data || (Array.isArray(res) ? res : []));
+      setMeta(res?.meta || { current_page: res?.current_page, last_page: res?.last_page } || {});
     } catch {
       console.error('Error fetching categories');
     } finally {
@@ -27,7 +29,13 @@ const CategoryManagement = () => {
     }
   };
 
-  useEffect(() => { fetchCategories(page); }, [page]);
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchCategories(page);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -81,8 +89,23 @@ const CategoryManagement = () => {
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Quản lý Danh mục</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ Thêm danh mục</button>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Danh mục</h1>
+        <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+          Thêm Danh mục
+        </button>
+      </div>
+
+      {/* ── Filters ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Tìm tên danh mục..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="form-input"
+          style={{ width: '300px' }}
+        />
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>

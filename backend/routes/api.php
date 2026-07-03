@@ -35,6 +35,8 @@ use App\Http\Controllers\Admin\FlashSaleController as AdminFlashSaleController;
 // Auth
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
+Route::post('/auth/forgot-password', [\App\Http\Controllers\ForgotPasswordController::class, 'sendResetLinkEmail']);
+Route::post('/auth/reset-password', [\App\Http\Controllers\ResetPasswordController::class, 'reset']);
 
 // Products & Catalog
 Route::get('/products', [ProductController::class, 'index']);
@@ -98,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+    Route::get('/orders/{orderId}/reviewable', [ReviewController::class, 'reviewableByOrder']);
 
     // Payment - VietQR
     Route::post('/payment/vietqr', [PaymentController::class, 'generateVietQR']);

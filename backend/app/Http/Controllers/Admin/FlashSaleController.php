@@ -11,11 +11,19 @@ use Illuminate\Http\Request;
 class FlashSaleController extends Controller
 {
     // GET /admin/flash-sales
-    public function index()
+    public function index(Request $request)
     {
-        $sales = FlashSale::with(['items.product', 'items.variant'])
-            ->latest()
-            ->paginate(10);
+        $query = FlashSale::with(['items.product', 'items.variant'])->latest();
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $sales = $query->paginate(10);
 
         return response()->json($sales);
     }

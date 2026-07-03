@@ -18,11 +18,24 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'brand', 'variants.capacity', 'variants.images']);
         
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
         
-        return $query->latest()->paginate(10);
+        $perPage = $request->get('per_page', 10);
+        return $query->latest()->paginate($perPage);
     }
 
     public function store(Request $request)

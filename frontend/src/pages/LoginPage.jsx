@@ -56,7 +56,10 @@ const LoginPage = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="password">Mật khẩu</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>Mật khẩu</label>
+                <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--color-accent)', textDecoration: 'none', fontWeight: 500 }}>Quên mật khẩu?</Link>
+              </div>
               <div className="form-input-wrap">
                 <input
                   id="password"

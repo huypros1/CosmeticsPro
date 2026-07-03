@@ -1,34 +1,38 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { adminApi } from '../../api/adminApi';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://backend.test/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(response.data.data);
+      setLoading(true);
+      // axiosClient returns response.data directly (res = paginate object)
+      const res = await adminApi.getUsers({ search, role: roleFilter, status: statusFilter });
+      setUsers(res?.data || (Array.isArray(res) ? res : []));
     } catch (error) {
       console.error('Error fetching users', error);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, roleFilter, statusFilter]);
+
   const updateRole = async (id, newRole) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`http://backend.test/api/admin/users/${id}/role`, { role: newRole }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await adminApi.updateUserRole(id, newRole);
       fetchUsers();
     } catch (error) {
       console.error('Error updating user role', error);
@@ -37,10 +41,7 @@ const UserManagement = () => {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`http://backend.test/api/admin/users/${id}/status`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await adminApi.updateUserStatus(id, newStatus);
       fetchUsers();
     } catch (error) {
       console.error('Error updating user status', error);
@@ -51,7 +52,41 @@ const UserManagement = () => {
 
   return (
     <div className="management-page">
-      <h1 style={{ marginTop: 0, marginBottom: '24px', fontSize: '24px' }}>Quản lý Người dùng</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Khách hàng</h1>
+      </div>
+
+      {/* ── Filters ── */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Tìm tên, email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="form-input"
+          style={{ width: '250px' }}
+        />
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="form-input"
+          style={{ width: '180px' }}
+        >
+          <option value="">Tất cả Vai trò</option>
+          <option value="admin">Quản trị viên (Admin)</option>
+          <option value="user">Khách hàng (User)</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="form-input"
+          style={{ width: '180px' }}
+        >
+          <option value="">Tất cả Trạng thái</option>
+          <option value="active">Hoạt động (Active)</option>
+          <option value="blocked">Khóa (Blocked)</option>
+        </select>
+      </div>
 
       <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <table className="admin-table">

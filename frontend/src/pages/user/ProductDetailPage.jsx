@@ -4,6 +4,7 @@ import { productApi } from '../../api/productApi';
 import { cartApi } from '../../api/cartApi';
 import { reviewApi } from '../../api/reviewApi';
 import { wishlistApi } from '../../api/wishlistApi';
+import { orderApi } from '../../api/orderApi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -34,6 +35,8 @@ const ProductDetailPage = () => {
   const [activeImg, setActiveImg] = useState(0);
   const [activeTab, setActiveTab] = useState('desc');
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [canReview, setCanReview] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -56,14 +59,37 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (product?.id) {
       reviewApi.getProductReviews(product.id)
-        .then((d) => setReviews(d.data || d || []))
+        .then((d) => {
+          const list = d.data || d || [];
+          setReviews(list);
+          // Check if current user already reviewed
+          if (user) {
+            const hasReview = list.some((r) => r.user?.id === user.id);
+            setAlreadyReviewed(hasReview);
+          }
+        })
         .catch(() => {});
       // Fetch related products
       productApi.getRelatedProducts(slug)
         .then((d) => setRelatedProducts(d.data || d || []))
         .catch(() => {});
+      // Check if user can review (has delivered order with this product)
+      if (user) {
+        orderApi.getOrders()
+          .then((d) => {
+            const orders = d.data || d || [];
+            const hasDelivered = orders.some((o) =>
+              o.status === 'delivered' &&
+              (o.items || o.order_items || []).some((item) =>
+                item.variant?.product?.id === product.id || item.variant?.product_id === product.id
+              )
+            );
+            setCanReview(hasDelivered);
+          })
+          .catch(() => setCanReview(false));
+      }
     }
-  }, [product?.id, slug]);
+  }, [product?.id, slug, user]);
 
   const handleAddToCart = async () => {
     if (!user) { toast.warning('Vui lòng đăng nhập để thêm vào giỏ hàng'); return; }
@@ -344,8 +370,18 @@ const ProductDetailPage = () => {
 
           {activeTab === 'reviews' && (
             <div className="tabs-content">
-              {/* Review Form */}
-              {user && (
+              {/* Review Form - only for users with delivered orders */}
+              {!user ? (
+                <div className="review-notice">
+                  <span className="review-notice__icon">🔒</span>
+                  <p>Vui lòng <Link to="/login" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>đăng nhập</Link> để đánh giá sản phẩm</p>
+                </div>
+              ) : alreadyReviewed ? (
+                <div className="review-notice review-notice--done">
+                  <span className="review-notice__icon">✅</span>
+                  <p>Bạn đã đánh giá sản phẩm này rồi. Cảm ơn bạn!</p>
+                </div>
+              ) : canReview ? (
                 <form className="review-form" onSubmit={handleReviewSubmit}>
                   <h4 className="review-form__title">Viết đánh giá của bạn</h4>
                   <div className="review-form__rating">
@@ -379,6 +415,11 @@ const ProductDetailPage = () => {
                     {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
                   </button>
                 </form>
+              ) : (
+                <div className="review-notice">
+                  <span className="review-notice__icon">📦</span>
+                  <p>Bạn chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã giao thành công</p>
+                </div>
               )}
 
               {/* Reviews List */}

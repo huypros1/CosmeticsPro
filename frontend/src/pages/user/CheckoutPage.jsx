@@ -6,6 +6,7 @@ import { profileApi } from '../../api/profileApi';
 import { voucherApi } from '../../api/voucherApi';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
+import AddressFormFields from '../../components/AddressFormFields';
 
 const formatPrice = (p) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
@@ -23,6 +24,7 @@ const CheckoutPage = () => {
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [checkoutAddressLine, setCheckoutAddressLine] = useState('');
 
   const { register: regAddr, handleSubmit: handleAddr, reset: resetAddr } = useForm();
 
@@ -62,12 +64,20 @@ const CheckoutPage = () => {
   };
 
   const handleAddAddress = async (data) => {
+    if (!checkoutAddressLine.trim()) {
+      toast.warning('Vui lòng chọn đầy đủ địa chỉ');
+      return;
+    }
     try {
-      const res = await profileApi.addAddress(data);
+      const res = await profileApi.addAddress({
+        address_line: checkoutAddressLine,
+        phone: data.phone,
+      });
       const newAddr = res.address || res;
       setAddresses((prev) => [...prev, newAddr]);
       setSelectedAddress(newAddr);
       setShowAddAddress(false);
+      setCheckoutAddressLine('');
       resetAddr();
       toast.success('Đã thêm địa chỉ');
     } catch {
@@ -176,16 +186,9 @@ const CheckoutPage = () => {
 
                 {showAddAddress && (
                   <form className="add-address-form" onSubmit={handleAddr(handleAddAddress)}>
+                    <AddressFormFields onAddressChange={setCheckoutAddressLine} />
                     <div className="form-group">
-                      <label className="form-label">Địa chỉ</label>
-                      <input
-                        className="form-input"
-                        placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
-                        {...regAddr('address_line', { required: true })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Số điện thoại</label>
+                      <label className="form-label">Số điện thoại <span style={{ color: 'var(--color-error)' }}>*</span></label>
                       <input
                         className="form-input"
                         placeholder="0909 123 456"
@@ -193,6 +196,11 @@ const CheckoutPage = () => {
                         {...regAddr('phone', { required: true })}
                       />
                     </div>
+                    {checkoutAddressLine && (
+                      <div style={{ padding: '10px 14px', background: 'var(--color-gray-50)', borderRadius: 'var(--radius-sm)', marginBottom: 12, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                        <strong>Địa chỉ:</strong> {checkoutAddressLine}
+                      </div>
+                    )}
                     <button type="submit" className="btn btn-primary btn-sm">Lưu địa chỉ</button>
                   </form>
                 )}
