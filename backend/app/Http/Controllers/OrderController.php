@@ -25,7 +25,7 @@ class OrderController extends Controller
 
     public function show(Request $request, $id)
     {
-        $order = Order::with(['order_items.variant.product', 'order_items.variant.capacity', 'order_items.variant.images', 'shipping_address', 'voucher'])
+        $order = Order::with(['order_items.variant.product', 'order_items.variant.capacity', 'order_items.variant.images', 'voucher'])
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
@@ -35,46 +35,105 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'shipping_address_id' => 'required|exists:shipping_addresses,id',
-            'payment_method' => 'required|string',
-            'items' => 'required|array|min:1',
+            'recipient_name'    => 'required|string|max:255',
+            'recipient_phone'   => 'required|string|max:20',
+            'shipping_address'  => 'required|string|max:500',
+            'payment_method'    => 'required|string',
+            'items'             => 'required|array|min:1',
             'items.*.variant_id' => 'required|exists:product_variants,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric',
-            'total_amount' => 'required|numeric',
+            'items.*.quantity'  => 'required|integer|min:1',
+            'items.*.price'     => 'required|numeric',
+            'total_amount'      => 'required|numeric',
         ]);
 
         DB::beginTransaction();
         try {
-            $order = Order::create([
-                'user_id' => $request->user()->id,
-                'shipping_address_id' => $request->shipping_address_id,
-                'payment_method' => $request->payment_method,
-                'voucher_id' => $request->voucher_id,
-                'shipping_fee' => $request->shipping_fee ?? 0,
-                'total_amount' => $request->total_amount,
-                'status' => 'pending',
-                'payment_status' => 'unpaid',
-            ]);
+            // ─── Tính subtotal từ items thực tế (không tin client) ───────────
+            $itemsTotal = 0;
+            foreach ($request->items as $item) {
+                $variant = \App\Models\ProductVariant::findOrFail($item['variant_id']);
+                // Lấy giá thực tế từ DB (không tin price từ client)
+                $realPrice = $variant->sale_price ?? $variant->price;
+                $itemsTotal += $realPrice * $item['quantity'];
+            }
+
+            // ─── Tính shipping fee ─────────────────────────────────────────────
+            $shippingFee = $itemsTotal >= 500000 ? 0 : 30000;
+
+            // ─── Tính discount từ voucher (server-side, không tin client) ──────
+            $discountAmount = 0;
+            $voucher        = null;
 
             if ($request->voucher_id) {
                 $voucher = \App\Models\Voucher::find($request->voucher_id);
-                if ($voucher) {
-                    $voucher->increment('used_count');
+
+                if (!$voucher || $voucher->status !== 'active') {
+                    return response()->json(['message' => 'Mã giảm giá không hợp lệ hoặc đã ngừng hoạt động'], 422);
                 }
+
+                $now = now();
+                if ($voucher->start_date && $now->lt($voucher->start_date)) {
+                    return response()->json(['message' => 'Mã giảm giá chưa có hiệu lực'], 422);
+                }
+                if ($voucher->end_date && $now->gt($voucher->end_date)) {
+                    return response()->json(['message' => 'Mã giảm giá đã hết hạn'], 422);
+                }
+                if ($voucher->usage_limit && $voucher->used_count >= $voucher->usage_limit) {
+                    return response()->json(['message' => 'Mã giảm giá đã hết lượt sử dụng'], 422);
+                }
+                if ($itemsTotal < $voucher->min_order_value) {
+                    return response()->json([
+                        'message' => 'Đơn hàng chưa đạt giá trị tối thiểu ' . number_format($voucher->min_order_value, 0, ',', '.') . 'đ để dùng mã này',
+                    ], 422);
+                }
+
+                // Tính discount trên subtotal (tiền hàng), không tính trên total
+                if ($voucher->discount_type === 'fixed') {
+                    $discountAmount = min($voucher->discount_value, $itemsTotal); // không giảm vượt tiền hàng
+                } elseif ($voucher->discount_type === 'percent') {
+                    $discountAmount = ($itemsTotal * $voucher->discount_value) / 100;
+                    if ($voucher->max_discount_amount && $discountAmount > $voucher->max_discount_amount) {
+                        $discountAmount = $voucher->max_discount_amount;
+                    }
+                }
+
+                $discountAmount = round($discountAmount, 2);
+            }
+
+            // ─── Tổng tiền thực = server tự tính, không tin client ───────────
+            $totalAmount = max(0, $itemsTotal + $shippingFee - $discountAmount);
+
+            $order = Order::create([
+                'user_id'          => $request->user()->id,
+                'recipient_name'   => $request->recipient_name,
+                'recipient_phone'  => $request->recipient_phone,
+                'shipping_address' => $request->shipping_address,
+                'payment_method'   => $request->payment_method,
+                'voucher_id'       => $request->voucher_id ?? null,
+                'discount_amount'  => $discountAmount,
+                'shipping_fee'     => $shippingFee,
+                'total_amount'     => $totalAmount,
+                'status'           => 'pending',
+                'payment_status'   => 'unpaid',
+            ]);
+
+            if ($voucher) {
+                $voucher->increment('used_count');
             }
 
             foreach ($request->items as $item) {
+                $variant = \App\Models\ProductVariant::findOrFail($item['variant_id']);
+                $realPrice = $variant->sale_price ?? $variant->price;
+
                 OrderItem::create([
-                    'order_id' => $order->id,
+                    'order_id'           => $order->id,
                     'product_variant_id' => $item['variant_id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
+                    'quantity'           => $item['quantity'],
+                    'price'              => $realPrice, // Lưu giá thực tế từ DB
                 ]);
 
                 // Decrement stock
-                $variant = \App\Models\ProductVariant::find($item['variant_id']);
-                if ($variant && $variant->stock >= $item['quantity']) {
+                if ($variant->stock >= $item['quantity']) {
                     $variant->decrement('stock', $item['quantity']);
                 }
             }
@@ -97,7 +156,6 @@ class OrderController extends Controller
                     'user',
                     'order_items.variant.product',
                     'order_items.variant.capacity',
-                    'shipping_address',
                 ]);
                 Mail::to($request->user()->email)->send(new OrderPlaced($orderWithRelations));
             } catch (\Exception $mailEx) {
@@ -106,8 +164,8 @@ class OrderController extends Controller
             }
 
             return response()->json([
-                'message' => 'Đặt hàng thành công',
-                'order' => new OrderResource($order),
+                'message'     => 'Đặt hàng thành công',
+                'order'       => new OrderResource($order),
                 'payment_url' => $paymentUrl
             ], 201);
         } catch (\Exception $e) {
@@ -129,7 +187,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Đã hủy đơn hàng',
-            'order' => new OrderResource($order)
+            'order'   => new OrderResource($order)
         ]);
     }
 }

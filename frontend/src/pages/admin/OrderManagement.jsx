@@ -1,87 +1,123 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../../api/adminApi';
 import { paymentApi } from '../../api/paymentApi';
+
+// Luồng trạng thái hợp lệ (phải khớp backend)
+const STATUS_ORDER = { pending: 0, confirmed: 1, processing: 2, shipped: 3, delivered: 4 };
+
+const STATUS_LABELS = {
+  pending:    { label: 'Chờ xử lý',       color: '#f59e0b', bg: '#fffbeb' },
+  confirmed:  { label: 'Đã xác nhận',     color: '#3b82f6', bg: '#eff6ff' },
+  processing: { label: 'Đang chuẩn bị',   color: '#8b5cf6', bg: '#f5f3ff' },
+  shipped:    { label: 'Đang giao',        color: '#06b6d4', bg: '#ecfeff' },
+  delivered:  { label: 'Đã giao',          color: '#10b981', bg: '#ecfdf5' },
+  cancelled:  { label: 'Đã hủy',           color: '#ef4444', bg: '#fef2f2' },
+};
+
+const PAYMENT_LABELS = {
+  unpaid:   { label: 'Chưa TT',    color: '#f59e0b' },
+  paid:     { label: '✅ Đã TT',   color: '#10b981' },
+  refunded: { label: '↩ Hoàn tiền', color: '#8b5cf6' },
+};
+
+const PAYMENT_METHOD_LABELS = { cod: 'COD', vietqr: 'VietQR', momo: 'MoMo', vnpay: 'VNPay' };
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmingId, setConfirmingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await adminApi.getOrders({ search, status: statusFilter, payment_status: paymentStatusFilter });
-      console.log('[Orders] res:', res, 'res.data:', res?.data);
+      const res = await adminApi.getOrders({
+        search,
+        status: statusFilter,
+        payment_status: paymentStatusFilter,
+      });
       const list = Array.isArray(res) ? res : (res?.data || []);
-      console.log('[Orders] list length:', list.length);
       setOrders(list);
-    } catch (err) {
-      console.error('[Orders] Error:', err?.response?.status, err?.message, err?.response?.data);
+    } catch {
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchOrders();
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter, paymentStatusFilter]);
 
-  const updateStatus = async (id, newStatus) => {
+  useEffect(() => {
+    const t = setTimeout(fetchOrders, 400);
+    return () => clearTimeout(t);
+  }, [fetchOrders]);
+
+  /* ── Chuyển trạng thái đơn hàng ── */
+  const updateStatus = async (order, newStatus) => {
+    if (newStatus === order.status) return;
+
+    const st = STATUS_LABELS[newStatus]?.label || newStatus;
+    if (!window.confirm(`Chuyển đơn #${order.id} sang trạng thái "${st}"?`)) return;
+
     try {
-      await adminApi.updateOrderStatus(id, { status: newStatus });
-      fetchOrders();
-    } catch (error) {
-      console.error('Error updating order status', error);
+      setUpdatingId(order.id);
+      await adminApi.updateOrderStatus(order.id, { status: newStatus });
+      await fetchOrders();
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái';
+      alert(`❌ ${msg}`);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
-  // ✅ Xác nhận đã nhận thanh toán VietQR
-  const confirmPayment = async (id) => {
-    if (!window.confirm(`Xác nhận đơn hàng #${id} đã nhận được thanh toán?`)) return;
+  /* ── Xác nhận thanh toán (QR / COD) ── */
+  const confirmPayment = async (order) => {
+    const method = PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method;
+    if (!window.confirm(`Xác nhận đơn #${order.id} đã nhận được thanh toán qua ${method}?`)) return;
     try {
-      setConfirmingId(id);
-      await paymentApi.adminConfirmPayment(id);
-      fetchOrders();
-      alert(`✅ Đã xác nhận thanh toán cho đơn hàng #${id}`);
-    } catch (error) {
-      console.error('Error confirming payment', error);
-      alert('Có lỗi xảy ra khi xác nhận thanh toán');
+      setConfirmingId(order.id);
+      await paymentApi.adminConfirmPayment(order.id);
+      await fetchOrders();
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Có lỗi xảy ra khi xác nhận thanh toán';
+      alert(`❌ ${msg}`);
     } finally {
       setConfirmingId(null);
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  /* ── Đánh dấu hoàn tiền ── */
+  const markRefunded = async (order) => {
+    if (!window.confirm(`Đánh dấu đơn #${order.id} đã hoàn tiền?`)) return;
+    try {
+      setUpdatingId(order.id);
+      await adminApi.updateOrderStatus(order.id, { payment_status: 'refunded' });
+      await fetchOrders();
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Có lỗi xảy ra';
+      alert(`❌ ${msg}`);
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
+  /* ── Disable logic cho select trạng thái ── */
   const isStatusDisabled = (currentStatus, optionStatus) => {
-    // Cannot change from cancelled to anything else
-    if (currentStatus === 'cancelled' && optionStatus !== 'cancelled') return true;
-    
-    // Cannot cancel if already shipped or delivered
-    if (optionStatus === 'cancelled' && (currentStatus === 'shipped' || currentStatus === 'delivered')) return true;
-
-    // Prevent moving backward
-    const statusOrder = { pending: 0, confirmed: 1, processing: 2, shipped: 3, delivered: 4, cancelled: 5 };
-    
-    // If not cancelling, prevent backward transition
+    if (currentStatus === 'cancelled') return true;           // Đơn đã hủy: lock toàn bộ
+    if (currentStatus === 'delivered') return true;           // Đơn đã giao: lock toàn bộ
+    if (optionStatus === 'cancelled' && ['shipped', 'delivered'].includes(currentStatus)) return true;
     if (optionStatus !== 'cancelled' && currentStatus !== 'cancelled') {
-       if (statusOrder[optionStatus] < statusOrder[currentStatus]) return true;
+      const cur = STATUS_ORDER[currentStatus] ?? -1;
+      const opt = STATUS_ORDER[optionStatus] ?? -1;
+      if (opt !== -1 && cur !== -1 && opt < cur) return true; // Không cho lùi
     }
-
     return false;
   };
-
-  if (loading) return <div>Đang tải danh sách đơn hàng...</div>;
 
   return (
     <div className="management-page">
@@ -90,20 +126,20 @@ const OrderManagement = () => {
       </div>
 
       {/* ── Filters ── */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
         <input
           type="text"
-          placeholder="Tìm mã đơn, tên KH, email..."
+          placeholder="Tìm mã đơn, tên KH, email, SĐT..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="form-input"
-          style={{ width: '300px' }}
+          style={{ width: '280px' }}
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="form-input"
-          style={{ width: '200px' }}
+          style={{ width: '180px' }}
         >
           <option value="">Tất cả Trạng thái</option>
           <option value="pending">Chờ xử lý</option>
@@ -117,12 +153,12 @@ const OrderManagement = () => {
           value={paymentStatusFilter}
           onChange={(e) => setPaymentStatusFilter(e.target.value)}
           className="form-input"
-          style={{ width: '220px' }}
+          style={{ width: '180px' }}
         >
           <option value="">Tất cả Thanh toán</option>
-          <option value="pending">Chờ thanh toán</option>
+          {/* Đúng giá trị theo DB: unpaid / paid / refunded */}
+          <option value="unpaid">Chưa thanh toán</option>
           <option value="paid">Đã thanh toán</option>
-          <option value="failed">Thất bại</option>
           <option value="refunded">Đã hoàn tiền</option>
         </select>
       </div>
@@ -136,68 +172,126 @@ const OrderManagement = () => {
               <th>Tổng tiền</th>
               <th>Thanh toán</th>
               <th>Ngày đặt</th>
-              <th>Trạng thái</th>
-              <th>Xác nhận TT</th>
+              <th style={{ minWidth: 180 }}>Trạng thái đơn</th>
+              <th>Thao tác TT</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map(order => (
-              <tr key={order.id}>
-                <td>#{order.id}</td>
-                <td>{order.user?.name}</td>
-                <td>{formatPrice(order.total_amount)}</td>
-                <td>
-                  <span className={order.payment_status === 'paid' ? 'status-badge status-delivered' : 'status-badge status-pending'}>
-                    {order.payment_status === 'paid' ? '✅ Đã TT' : '⏳ Chưa TT'}
-                  </span>
-                </td>
-                <td>{new Date(order.created_at).toLocaleDateString('vi-VN')}</td>
-                <td>
-                  <select
-                    value={order.status}
-                    onChange={(e) => updateStatus(order.id, e.target.value)}
-                    style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: order.status === 'cancelled' ? '#f3f4f6' : '#fff' }}
-                    disabled={order.status === 'cancelled'}
-                  >
-                    <option value="pending" disabled={isStatusDisabled(order.status, 'pending')}>Chờ xử lý</option>
-                    <option value="confirmed" disabled={isStatusDisabled(order.status, 'confirmed')}>Đã xác nhận</option>
-                    <option value="processing" disabled={isStatusDisabled(order.status, 'processing')}>Đang chuẩn bị</option>
-                    <option value="shipped" disabled={isStatusDisabled(order.status, 'shipped')}>Đang giao</option>
-                    <option value="delivered" disabled={isStatusDisabled(order.status, 'delivered')}>Đã giao</option>
-                    <option value="cancelled" disabled={isStatusDisabled(order.status, 'cancelled')}>Đã hủy</option>
-                  </select>
-                </td>
-                <td>
-                  {/* Hiện nút xác nhận thanh toán cho cả COD và VietQR, trừ khi đơn bị hủy */}
-                  {order.payment_status !== 'paid' && order.status !== 'cancelled' ? (
-                    <button
-                      onClick={() => confirmPayment(order.id)}
-                      disabled={confirmingId === order.id}
-                      style={{
-                        padding: '6px 12px',
-                        background: confirmingId === order.id ? '#94a3b8' : '#10b981',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: confirmingId === order.id ? 'wait' : 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {confirmingId === order.id ? '...' : `✅ Nhận TT (${order.payment_method === 'vietqr' ? 'QR' : 'COD'})`}
-                    </button>
-                  ) : order.payment_status === 'paid' ? (
-                    <span style={{ color: '#10b981', fontSize: 12, fontWeight: 600 }}>Đã thanh toán</span>
-                  ) : (
-                    <span style={{ color: '#94a3b8', fontSize: 12 }}>Đã hủy</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {orders.length === 0 && (
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i}>{Array.from({ length: 7 }).map((_, j) => (
+                  <td key={j}><div className="skeleton" style={{ height: 16, borderRadius: 4 }} /></td>
+                ))}</tr>
+              ))
+              : orders.map(order => {
+                const pm = PAYMENT_LABELS[order.payment_status] || { label: order.payment_status, color: '#6b7280' };
+                const isLocked = order.status === 'cancelled' || order.status === 'delivered';
+                const isUpdating = updatingId === order.id || confirmingId === order.id;
+
+                return (
+                  <tr key={order.id} style={{ opacity: isUpdating ? 0.6 : 1, transition: 'opacity .2s' }}>
+                    <td>
+                      <span style={{ fontWeight: 700 }}>#{order.id}</span>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{order.user?.name}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>{order.recipient_phone}</div>
+                    </td>
+                    <td style={{ fontWeight: 600 }}>{formatPrice(order.total_amount)}</td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: pm.color }}>
+                          {pm.label}
+                        </span>
+                        <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                          {PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 12 }}>
+                      {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                    </td>
+
+                    {/* ── Select trạng thái đơn ── */}
+                    <td>
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateStatus(order, e.target.value)}
+                        disabled={isLocked || isUpdating}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          border: `1px solid ${STATUS_LABELS[order.status]?.color || '#ccc'}`,
+                          backgroundColor: STATUS_LABELS[order.status]?.bg || '#f9fafb',
+                          color: STATUS_LABELS[order.status]?.color || '#374151',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          cursor: isLocked ? 'not-allowed' : 'pointer',
+                          opacity: isLocked ? 0.7 : 1,
+                        }}
+                      >
+                        <option value="pending"    disabled={isStatusDisabled(order.status, 'pending')}>Chờ xử lý</option>
+                        <option value="confirmed"  disabled={isStatusDisabled(order.status, 'confirmed')}>Đã xác nhận</option>
+                        <option value="processing" disabled={isStatusDisabled(order.status, 'processing')}>Đang chuẩn bị</option>
+                        <option value="shipped"    disabled={isStatusDisabled(order.status, 'shipped')}>Đang giao</option>
+                        <option value="delivered"  disabled={isStatusDisabled(order.status, 'delivered')}>Đã giao</option>
+                        <option value="cancelled"  disabled={isStatusDisabled(order.status, 'cancelled')}>Đã hủy</option>
+                      </select>
+                    </td>
+
+                    {/* ── Thao tác thanh toán ── */}
+                    <td>
+                      {order.payment_status === 'refunded' ? (
+                        <span style={{ fontSize: 12, color: '#8b5cf6', fontWeight: 600 }}>↩ Đã hoàn tiền</span>
+
+                      ) : order.payment_status === 'paid' ? (
+                        // Đơn bị hủy + đã paid → cho phép đánh refunded
+                        order.status === 'cancelled' ? (
+                          <button
+                            onClick={() => markRefunded(order)}
+                            disabled={isUpdating}
+                            style={{
+                              padding: '5px 10px', borderRadius: 6, border: '1px solid #c084fc',
+                              background: '#faf5ff', color: '#7c3aed', cursor: 'pointer',
+                              fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ↩ Đánh hoàn tiền
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 12, color: '#10b981', fontWeight: 600 }}>✅ Đã thanh toán</span>
+                        )
+
+                      ) : order.status === 'cancelled' ? (
+                        <span style={{ fontSize: 12, color: '#9ca3af' }}>—</span>
+
+                      ) : (
+                        // Chưa thanh toán + chưa hủy → nút xác nhận
+                        <button
+                          onClick={() => confirmPayment(order)}
+                          disabled={confirmingId === order.id}
+                          style={{
+                            padding: '5px 10px', borderRadius: 6, border: 'none',
+                            background: confirmingId === order.id ? '#94a3b8' : '#10b981',
+                            color: '#fff', cursor: confirmingId === order.id ? 'wait' : 'pointer',
+                            fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {confirmingId === order.id
+                            ? '...'
+                            : `✅ Nhận TT (${PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method})`}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            }
+            {!loading && orders.length === 0 && (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '24px' }}>Chưa có đơn hàng nào</td>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: '#9ca3af' }}>
+                  Không có đơn hàng nào
+                </td>
               </tr>
             )}
           </tbody>

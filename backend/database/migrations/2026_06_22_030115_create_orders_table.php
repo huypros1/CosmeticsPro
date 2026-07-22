@@ -14,12 +14,19 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('restrict');
-            $table->string('status')->default('pending'); // pending, processing, shipped, delivered, cancelled
-            $table->decimal('total_amount', 15, 2);
-            $table->foreignId('shipping_address_id')->constrained('shipping_addresses')->onDelete('restrict');
+            $table->string('status')->default('pending'); // pending, confirmed, processing, shipped, delivered, cancelled
+
+            // Snapshot địa chỉ giao hàng tại thời điểm đặt hàng (không dùng FK để tránh mất dữ liệu khi user sửa địa chỉ)
+            $table->string('recipient_name');
+            $table->string('recipient_phone', 20);
+            $table->string('shipping_address'); // Địa chỉ đầy đủ: số nhà, phường, quận, tỉnh/thành
+
             $table->foreignId('voucher_id')->nullable()->constrained('vouchers')->onDelete('set null'); // Nếu xóa voucher, đơn hàng cũ giữ nguyên và cột này nhận giá trị null
-            $table->string('payment_method'); // cod, vnpay, momo...
+            $table->decimal('discount_amount', 15, 2)->default(0); // Snapshot số tiền đã giảm thực tế tại thời điểm đặt
+
+            $table->string('payment_method'); // cod, vietqr, vnpay, momo...
             $table->decimal('shipping_fee', 15, 2)->default(0);
+            $table->decimal('total_amount', 15, 2); // Tổng tiền sau khi trừ discount + cộng shipping_fee
             $table->string('payment_status')->default('unpaid'); // unpaid, paid, refunded
             $table->timestamps();
         });

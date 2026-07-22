@@ -82,13 +82,21 @@ class PaymentController extends Controller
         $order = \App\Models\Order::findOrFail($orderId);
 
         if ($order->payment_status === 'paid') {
-            return response()->json(['message' => 'Đơn hàng đã được xác nhận thanh toán trước đó']);
+            return response()->json(['message' => 'Đơn hàng đã được xác nhận thanh toán trước đó.'], 422);
         }
 
-        $order->update([
-            'payment_status' => 'paid',
-            'status'         => 'confirmed',
-        ]);
+        if ($order->status === 'cancelled') {
+            return response()->json(['message' => 'Không thể xác nhận thanh toán cho đơn hàng đã hủy.'], 422);
+        }
+
+        $updateData = ['payment_status' => 'paid'];
+
+        // Chỉ chuyển sang confirmed nếu đơn vẫn còn ở pending (chưa admin xử lý)
+        if ($order->status === 'pending') {
+            $updateData['status'] = 'confirmed';
+        }
+
+        $order->update($updateData);
 
         return response()->json([
             'success' => true,

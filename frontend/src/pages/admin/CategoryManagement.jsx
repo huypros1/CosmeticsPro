@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { adminApi } from '../../api/adminApi';
 
+/** Trả về URL hiển thị ảnh: blob (file mới) hoặc ảnh từ server */
+const getImgSrc = (src) => {
+  if (!src) return null;
+  if (src.startsWith('blob:') || src.startsWith('http')) return src;
+  return `http://backend.test${src}`;
+};
+
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +63,17 @@ const CategoryManagement = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // Revoke old blob to avoid memory leak
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const handleSave = async (e) => {
@@ -182,12 +198,54 @@ const CategoryManagement = () => {
               </div>
               <div className="form-group" style={{ marginBottom: 24 }}>
                 <label className="form-label">Ảnh danh mục</label>
-                {imagePreview && (
-                  <img src={imagePreview} alt="preview" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+
+                {/* Preview box */}
+                <div style={{
+                  width: '100%', height: 180, borderRadius: 10, overflow: 'hidden',
+                  border: '2px dashed var(--color-gray-200)', marginBottom: 10,
+                  background: 'var(--color-gray-50)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', position: 'relative',
+                }}>
+                  {imagePreview ? (
+                    <>
+                      <img
+                        src={getImgSrc(imagePreview)}
+                        alt="preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        style={{
+                          position: 'absolute', top: 6, right: 6,
+                          background: 'rgba(0,0,0,.55)', color: '#fff',
+                          border: 'none', borderRadius: '50%',
+                          width: 26, height: 26, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 14, lineHeight: 1,
+                        }}
+                        title="Xóa ảnh"
+                      >×</button>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                      <div style={{ fontSize: 36, marginBottom: 6 }}>🖼️</div>
+                      <p style={{ fontSize: 13, margin: 0 }}>Chưa có ảnh</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* File info */}
+                {imageFile && (
+                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+                    📎 {imageFile.name} ({(imageFile.size / 1024).toFixed(1)} KB)
+                  </p>
                 )}
+
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => fileRef.current?.click()}>
-                  {imagePreview ? 'Đổi ảnh' : 'Chọn ảnh'}
+                  {imagePreview ? '🔄 Đổi ảnh' : '📁 Chọn ảnh'}
                 </button>
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

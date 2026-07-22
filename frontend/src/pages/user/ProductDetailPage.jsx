@@ -164,12 +164,19 @@ const ProductDetailPage = () => {
     );
   }
 
-  const allImages = [product.image, ...(product.images?.map((i) => i.url) || [])].filter(Boolean);
+  // Ưu tiên product_images (gallery ảnh riêng), fallback về ảnh chính
+  const galleryImgs = product.product_images?.length
+    ? product.product_images.map(i => i.url)
+    : [product.image].filter(Boolean);
+  const allImages = galleryImgs;
   const hasDiscount = selectedVariant?.sale_price && selectedVariant.sale_price < selectedVariant.price;
   const displayPrice = hasDiscount ? selectedVariant.sale_price : selectedVariant?.price;
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : 0;
+
+  const prevImg = () => setActiveImg(i => (i - 1 + allImages.length) % allImages.length);
+  const nextImg = () => setActiveImg(i => (i + 1) % allImages.length);
 
   return (
     <div className="product-detail-page">
@@ -193,9 +200,16 @@ const ProductDetailPage = () => {
         <div className="product-detail__main">
           {/* Gallery */}
           <div className="product-gallery">
-            <div className="product-gallery__main">
+            {/* Main image với prev/next */}
+            <div className="product-gallery__main" style={{ position: 'relative', overflow: 'hidden' }}>
               {allImages.length > 0 ? (
-                <img src={allImages[activeImg]} alt={product.name} className="product-gallery__img" />
+                <img
+                  src={allImages[activeImg]}
+                  alt={`${product.name} - ảnh ${activeImg + 1}`}
+                  className="product-gallery__img"
+                  style={{ transition: 'opacity .25s ease', opacity: 1 }}
+                  key={activeImg}
+                />
               ) : (
                 <div className="product-gallery__placeholder">
                   <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.3">
@@ -204,7 +218,45 @@ const ProductDetailPage = () => {
                   </svg>
                 </div>
               )}
+
+              {/* Prev / Next buttons */}
+              {allImages.length > 1 && (
+                <>
+                  <button onClick={prevImg} style={{
+                    position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(255,255,255,.85)', border: 'none', borderRadius: '50%',
+                    width: 36, height: 36, cursor: 'pointer', fontSize: 18, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,.15)', transition: 'background .15s',
+                  }} onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,1)'}
+                     onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.85)'}>‹</button>
+                  <button onClick={nextImg} style={{
+                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'rgba(255,255,255,.85)', border: 'none', borderRadius: '50%',
+                    width: 36, height: 36, cursor: 'pointer', fontSize: 18, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,.15)', transition: 'background .15s',
+                  }} onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,1)'}
+                     onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.85)'}>›</button>
+
+                  {/* Dot indicators */}
+                  <div style={{
+                    position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)',
+                    display: 'flex', gap: 6,
+                  }}>
+                    {allImages.map((_, i) => (
+                      <button key={i} onClick={() => setActiveImg(i)} style={{
+                        width: i === activeImg ? 20 : 8, height: 8, borderRadius: 4, border: 'none',
+                        background: i === activeImg ? 'var(--color-accent, #C9956A)' : 'rgba(255,255,255,.6)',
+                        cursor: 'pointer', transition: 'all .25s ease', padding: 0,
+                      }} />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Thumbnail strip */}
             {allImages.length > 1 && (
               <div className="product-gallery__thumbs">
                 {allImages.map((img, i) => (

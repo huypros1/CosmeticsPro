@@ -61,14 +61,11 @@
         
         <div class="order-info">
             <h3>Thông tin giao hàng</h3>
-            @if($order->shipping_address)
             <p style="margin: 0; font-size: 14px;">
-                <strong>{{ $order->shipping_address->user_name ?? $order->user->name }}</strong><br>
-                SĐT: {{ $order->shipping_address->phone }}<br>
-                {{ $order->shipping_address->address_line }}<br>
-                {{ $order->shipping_address->ward_name }}, {{ $order->shipping_address->district_name }}, {{ $order->shipping_address->province_name }}
+                <strong>{{ $order->recipient_name }}</strong><br>
+                SĐT: {{ $order->recipient_phone }}<br>
+                {{ $order->shipping_address }}
             </p>
-            @endif
         </div>
         
         <div class="btn-wrapper">

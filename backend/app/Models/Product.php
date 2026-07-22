@@ -35,6 +35,12 @@ class Product extends Model
         return $this->hasManyThrough(Image::class, ProductVariant::class, 'product_id', 'variant_id');
     }
 
+    /** Ảnh gắn trực tiếp với sản phẩm (không qua variant) */
+    public function productImages()
+    {
+        return $this->hasMany(Image::class)->whereNotNull('product_id')->orderBy('sort_order');
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);

@@ -38,6 +38,18 @@ class VoucherController extends Controller
             return response()->json(['message' => 'Mã giảm giá đã hết lượt sử dụng'], 400);
         }
 
+        // Kiểm tra số lần user đã dùng voucher này
+        if ($request->user()) {
+            $userUsedCount = \App\Models\Order::where('user_id', $request->user()->id)
+                ->where('voucher_id', $voucher->id)
+                ->whereNotIn('status', ['cancelled'])
+                ->count();
+
+            if ($userUsedCount >= $voucher->max_uses_per_user) {
+                return response()->json(['message' => 'Bạn đã sử dụng mã giảm giá này tối đa ' . $voucher->max_uses_per_user . ' lần'], 400);
+            }
+        }
+
         if ($request->order_value < $voucher->min_order_value) {
             return response()->json(['message' => 'Đơn hàng chưa đạt giá trị tối thiểu'], 400);
         }

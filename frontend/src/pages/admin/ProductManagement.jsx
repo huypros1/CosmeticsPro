@@ -4,6 +4,13 @@ import { productApi } from '../../api/productApi';
 
 const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
 
+/** Trả về URL hiển thị ảnh: blob (file mới) hoặc path từ server */
+const getImgSrc = (src) => {
+  if (!src) return null;
+  if (src.startsWith('blob:') || src.startsWith('http')) return src;
+  return `http://backend.test${src}`;
+};
+
 const emptyForm = {
   name: '', description: '', content: '', status: 'active',
   category_id: '', brand_id: '', is_featured: false,
@@ -27,7 +34,14 @@ const ProductManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [brandFilter, setBrandFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const fileRef = useRef();
+  const fileRef    = useRef();
+  const galleryRef = useRef();
+
+  // Gallery state
+  const [galleryImages, setGalleryImages]   = useState([]); // ảnh đã lưu trên server
+  const [galleryPending, setGalleryPending] = useState([]); // file mới chờ upload
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   const fetchProducts = async (p = 1) => {
     try {
@@ -70,6 +84,8 @@ const ProductManagement = () => {
     setVariants([{ capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]);
     setImageFile(null);
     setImagePreview(null);
+    setGalleryImages([]);
+    setGalleryPending([]);
     setShowModal(true);
   };
 
@@ -98,14 +114,30 @@ const ProductManagement = () => {
           }))
         : [{ capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]
     );
+    setGalleryImages([]);
+    setGalleryPending([]);
     setShowModal(true);
+    // Fetch ảnh gallery từ server
+    setGalleryLoading(true);
+    adminApi.getProductImages(product.id)
+      .then(res => setGalleryImages(Array.isArray(res) ? res : (res?.data || [])))
+      .catch(() => {})
+      .finally(() => setGalleryLoading(false));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    if (imagePreview?.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const addVariant = () => setVariants(prev => [...prev, { capacity_value: '', capacity_unit: 'ml', price: '', sale_price: '', stock: '' }]);
@@ -132,17 +164,30 @@ const ProductManagement = () => {
           if (v.id) fd.append(`variants[${i}][id]`, v.id);
         }
       });
+      let savedProduct;
       if (editItem) {
-        await adminApi.updateProduct(editItem.id, fd);
+        savedProduct = await adminApi.updateProduct(editItem.id, fd);
       } else {
-        await adminApi.createProduct(fd);
+        savedProduct = await adminApi.createProduct(fd);
       }
+
+      // Upload gallery ảnh mới (nếu có)
+      const productId = savedProduct?.data?.id ?? savedProduct?.id ?? editItem?.id;
+      if (productId && galleryPending.length > 0) {
+        setUploadingGallery(true);
+        const gfd = new FormData();
+        galleryPending.forEach(f => gfd.append('images[]', f));
+        await adminApi.uploadProductImages(productId, gfd);
+        setUploadingGallery(false);
+      }
+
       setShowModal(false);
       fetchProducts(page);
     } catch (err) {
       alert(err.response?.data?.message || 'Có lỗi xảy ra');
     } finally {
       setSaving(false);
+      setUploadingGallery(false);
     }
   };
 
@@ -323,14 +368,165 @@ const ProductManagement = () => {
               {/* Image */}
               <div className="form-group" style={{ marginBottom: 24 }}>
                 <label className="form-label">Ảnh sản phẩm</label>
-                {imagePreview && (
-                  <img src={imagePreview.startsWith('http') ? imagePreview : `http://backend.test${imagePreview}`} alt="preview"
-                    style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+
+                {/* Preview box */}
+                <div style={{
+                  width: '100%', height: 200, borderRadius: 10, overflow: 'hidden',
+                  border: '2px dashed var(--color-gray-200)', marginBottom: 10,
+                  background: 'var(--color-gray-50)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', position: 'relative',
+                }}>
+                  {imagePreview ? (
+                    <>
+                      <img
+                        src={getImgSrc(imagePreview)}
+                        alt="preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        style={{
+                          position: 'absolute', top: 6, right: 6,
+                          background: 'rgba(0,0,0,.55)', color: '#fff',
+                          border: 'none', borderRadius: '50%',
+                          width: 28, height: 28, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 16, lineHeight: 1,
+                        }}
+                        title="Xóa ảnh"
+                      >×</button>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                      <div style={{ fontSize: 40, marginBottom: 8 }}>🖼️</div>
+                      <p style={{ fontSize: 13, margin: 0 }}>Chưa có ảnh sản phẩm</p>
+                      <p style={{ fontSize: 12, margin: '4px 0 0', color: 'var(--color-text-muted)' }}>PNG, JPG, WEBP — tối đa 5MB</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* File info */}
+                {imageFile && (
+                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+                    📎 {imageFile.name} ({(imageFile.size / 1024).toFixed(1)} KB)
+                  </p>
                 )}
+
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => fileRef.current?.click()}>
-                  {imagePreview ? 'Đổi ảnh' : 'Chọn ảnh'}
+                  {imagePreview ? '🔄 Đổi ảnh' : '📁 Chọn ảnh'}
                 </button>
+              </div>
+
+              {/* ── Gallery ảnh sản phẩm ── */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <label className="form-label" style={{ margin: 0 }}>
+                    🖼️ Bộ ảnh sản phẩm
+                    <span style={{ fontSize: 11, fontWeight: 400, color: '#6b7280', marginLeft: 6 }}>
+                      (tối đa 10 ảnh, tự động hiển thị slider trang chi tiết)
+                    </span>
+                  </label>
+                  <button type="button" className="btn btn-outline btn-sm"
+                    onClick={() => galleryRef.current?.click()}
+                    disabled={galleryImages.length + galleryPending.length >= 10}
+                  >
+                    + Thêm ảnh
+                  </button>
+                </div>
+                <input
+                  ref={galleryRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    const remaining = 10 - galleryImages.length - galleryPending.length;
+                    const toAdd = files.slice(0, remaining);
+                    setGalleryPending(prev => [...prev, ...toAdd]);
+                    e.target.value = '';
+                  }}
+                />
+
+                {galleryLoading ? (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {[1,2,3].map(i => (
+                      <div key={i} className="skeleton" style={{ width: 90, height: 90, borderRadius: 8 }} />
+                    ))}
+                  </div>
+                ) : (galleryImages.length + galleryPending.length === 0) ? (
+                  <div style={{ border: '2px dashed #d1d5db', borderRadius: 10, padding: '24px',
+                    textAlign: 'center', color: '#9ca3af', cursor: 'pointer' }}
+                    onClick={() => galleryRef.current?.click()}>
+                    <div style={{ fontSize: 32, marginBottom: 6 }}>📷</div>
+                    <p style={{ margin: 0, fontSize: 13 }}>Nhấn để thêm ảnh gallery</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 11 }}>PNG, JPG, WEBP — max 5MB/ảnh</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {/* Ảnh đã lưu trên server */}
+                    {galleryImages.map((img) => (
+                      <div key={img.id} style={{ position: 'relative', width: 90, height: 90 }}>
+                        <img
+                          src={img.url?.startsWith('http') ? img.url : `http://backend.test${img.url}`}
+                          alt="gallery"
+                          style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }}
+                          onError={(e) => { e.target.style.opacity = '0.3'; }}
+                        />
+                        <button type="button"
+                          onClick={async () => {
+                            if (!window.confirm('Xóa ảnh này?')) return;
+                            try {
+                              await adminApi.deleteProductImage(editItem?.id, img.id);
+                              setGalleryImages(prev => prev.filter(i => i.id !== img.id));
+                            } catch { alert('Không thể xóa ảnh'); }
+                          }}
+                          style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(239,68,68,.85)',
+                            color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22,
+                            cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Xóa ảnh"
+                        >×</button>
+                        <div style={{ position: 'absolute', bottom: 3, left: 3, background: 'rgba(0,0,0,.45)',
+                          color: '#fff', fontSize: 9, borderRadius: 3, padding: '1px 4px' }}>Đã lưu</div>
+                      </div>
+                    ))}
+
+                    {/* File mới chờ upload */}
+                    {galleryPending.map((file, idx) => {
+                      const blobUrl = URL.createObjectURL(file);
+                      return (
+                        <div key={`pending-${idx}`} style={{ position: 'relative', width: 90, height: 90 }}>
+                          <img src={blobUrl} alt="pending"
+                            style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8,
+                              border: '2px dashed #10b981', opacity: 0.85 }} />
+                          <button type="button"
+                            onClick={() => setGalleryPending(prev => prev.filter((_, i) => i !== idx))}
+                            style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(239,68,68,.85)',
+                              color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22,
+                              cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >×</button>
+                          <div style={{ position: 'absolute', bottom: 3, left: 3, background: 'rgba(16,185,129,.7)',
+                            color: '#fff', fontSize: 9, borderRadius: 3, padding: '1px 4px' }}>Mới</div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Nút thêm nếu còn slot */}
+                    {galleryImages.length + galleryPending.length < 10 && (
+                      <button type="button"
+                        onClick={() => galleryRef.current?.click()}
+                        style={{ width: 90, height: 90, borderRadius: 8, border: '2px dashed #d1d5db',
+                          background: '#f9fafb', color: '#6b7280', cursor: 'pointer', fontSize: 24, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center' }}
+                      >+</button>
+                    )}
+                  </div>
+                )}
+                {(galleryImages.length + galleryPending.length > 0) && (
+                  <p style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                    {galleryImages.length} ảnh đã lưu · {galleryPending.length} ảnh sẽ upload khi lưu
+                    {galleryPending.length > 0 && <span style={{ color: '#10b981', fontWeight: 600 }}> ✓</span>}
+                  </p>
+                )}
               </div>
 
               {/* Variants */}
@@ -358,7 +554,9 @@ const ProductManagement = () => {
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Hủy</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu sản phẩm'}</button>
+                <button type="submit" className="btn btn-primary" disabled={saving || uploadingGallery}>
+                  {uploadingGallery ? '📤 Đang upload ảnh...' : saving ? '⏳ Đang lưu...' : 'Lưu sản phẩm'}
+                </button>
               </div>
             </form>
           </div>

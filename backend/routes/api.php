@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\FlashSaleController as AdminFlashSaleController;
+use App\Http\Controllers\Admin\ProductImageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,14 +71,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    // Profile & Addresses
+    // Profile
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/profile/avatar', [ProfileController::class, 'uploadAvatar']);
     Route::put('/profile/password', [ProfileController::class, 'changePassword']);
-    Route::get('/profile/addresses', [ProfileController::class, 'getAddresses']);
-    Route::post('/profile/addresses', [ProfileController::class, 'addAddress']);
-    Route::delete('/profile/addresses/{id}', [ProfileController::class, 'deleteAddress']);
-    Route::put('/profile/addresses/{id}/default', [ProfileController::class, 'setDefaultAddress']);
 
     // Cart
     Route::get('/cart', [CartController::class, 'index']);
@@ -130,6 +127,12 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/orders', [AdminOrderController::class, 'index']);
     Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
     Route::put('/orders/{id}/status', [AdminOrderController::class, 'updateStatus']);
+
+    // Product Gallery Images
+    Route::get('/products/{id}/images', [ProductImageController::class, 'index']);
+    Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
+    Route::delete('/products/{id}/images/{imageId}', [ProductImageController::class, 'destroy']);
+    Route::put('/products/{id}/images/reorder', [ProductImageController::class, 'reorder']);
 
     // Manage Users
     Route::get('/users', [AdminUserController::class, 'index']);

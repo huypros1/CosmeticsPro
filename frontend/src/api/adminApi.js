@@ -28,6 +28,12 @@ export const adminApi = {
   deleteProduct: (id) => axiosClient.delete(`/admin/products/${id}`),
   toggleProductStatus: (id) => axiosClient.patch(`/admin/products/${id}/toggle-status`),
 
+  // Product Gallery Images
+  getProductImages: (id) => axiosClient.get(`/admin/products/${id}/images`),
+  uploadProductImages: (id, formData) => axiosClient.post(`/admin/products/${id}/images`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteProductImage: (productId, imageId) => axiosClient.delete(`/admin/products/${productId}/images/${imageId}`),
+  reorderProductImages: (id, order) => axiosClient.put(`/admin/products/${id}/images/reorder`, { order }),
+
   // Orders
   getOrders: (params) => axiosClient.get('/admin/orders', { params }),
   getOrder: (id) => axiosClient.get(`/admin/orders/${id}`),

@@ -24,6 +24,13 @@ class ProductResource extends JsonResource
             'reviews' => ReviewResource::collection($this->whenLoaded('reviews')),
             'rating_avg' => $this->when($this->reviews_avg_rating !== null, round($this->reviews_avg_rating, 1)),
             'reviews_count' => $this->when($this->reviews_count !== null, $this->reviews_count),
+            'product_images' => $this->whenLoaded('productImages', function () {
+                return $this->productImages->map(fn($img) => [
+                    'id'         => $img->id,
+                    'url'        => str_starts_with($img->url, 'http') ? $img->url : url($img->url),
+                    'sort_order' => $img->sort_order,
+                ]);
+            }),
         ];
     }
 }

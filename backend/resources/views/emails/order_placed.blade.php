@@ -127,13 +127,12 @@
         </table>
 
         <!-- Shipping Address -->
-        @if($order->shipping_address)
         <div class="shipping-box">
             <h2>📍 Địa chỉ giao hàng</h2>
-            <p>{{ $order->shipping_address->address_line }}</p>
-            <p style="margin-top:4px; color:#555">SĐT: {{ $order->shipping_address->phone }}</p>
+            <p><strong>{{ $order->recipient_name }}</strong></p>
+            <p>{{ $order->shipping_address }}</p>
+            <p style="margin-top:4px; color:#555">SĐT: {{ $order->recipient_phone }}</p>
         </div>
-        @endif
 
         <!-- CTA Button -->
         <div class="cta">
