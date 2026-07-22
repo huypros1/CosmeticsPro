@@ -148,6 +148,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::apiResource('flash-sales', AdminFlashSaleController::class);
     Route::patch('/flash-sales/{id}/toggle-status', [AdminFlashSaleController::class, 'toggleStatus']);
 
+    // Manage Vouchers
+    Route::apiResource('vouchers', \App\Http\Controllers\Admin\VoucherController::class);
+    Route::patch('/vouchers/{id}/toggle-status', [\App\Http\Controllers\Admin\VoucherController::class, 'toggleStatus']);
+
     // Payment Confirmation
     Route::post('/payment/{orderId}/confirm', [PaymentController::class, 'adminConfirmPayment']);
 });

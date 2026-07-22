@@ -17,6 +17,7 @@ import UserManagement from './pages/admin/UserManagement';
 import PostManagement from './pages/admin/PostManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
 import FlashSaleManagement from './pages/admin/FlashSaleManagement';
+import VoucherPage from './pages/admin/VoucherPage';
 import ReadLog from './pages/admin/ReadLog';
 
 // Auth Pages
@@ -114,6 +115,7 @@ const App = () => {
                 <Route path="posts" element={<PostManagement />} />
                 <Route path="reviews" element={<ReviewManagement />} />
                 <Route path="flash-sales" element={<FlashSaleManagement />} />
+                <Route path="vouchers" element={<VoucherPage />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="read-log" element={<ReadLog />} />
               </Route>

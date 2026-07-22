@@ -186,7 +186,7 @@ const HomePage = () => {
                 <Link key={cat.id} to={`/products?category=${cat.slug}`} className="category-card">
                   <div className="category-card__img">
                     {cat.image ? (
-                      <img src={cat.image} alt={cat.name} />
+                      <img src={cat.image.startsWith('http') ? cat.image : `http://backend.test${cat.image}`} alt={cat.name} onError={(e) => { e.target.onerror = null; e.target.src = '/default-product.png'; }} />
                     ) : (
                       <div className="category-card__placeholder">
                         <span>{cat.name?.charAt(0)}</span>
@@ -343,7 +343,7 @@ const HomePage = () => {
                 <Link key={post.id} to={`/blog/${post.slug}`} className="blog-card">
                   <div className="blog-card__img">
                     {post.thumbnail ? (
-                      <img src={post.thumbnail} alt={post.title} />
+                      <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
                     ) : (
                       <div className="blog-card__img-placeholder" />
                     )}

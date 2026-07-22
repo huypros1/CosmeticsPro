@@ -40,7 +40,7 @@ const BlogDetailPage = () => {
       {/* Hero Image */}
       {post.thumbnail && (
         <div className="blog-detail__hero-img">
-          <img src={post.thumbnail} alt={post.title} />
+          <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
         </div>
       )}
 
@@ -61,7 +61,7 @@ const BlogDetailPage = () => {
             </div>
             <h1 className="blog-detail__title">{post.title}</h1>
             {post.image && (
-              <img src={post.image} alt={post.title} className="blog-detail__main-img" />
+              <img src={post.image.startsWith('http') ? post.image : `http://backend.test${post.image}`} alt={post.title} className="blog-detail__main-img" onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
             )}
             <div
               className="blog-detail__content"

@@ -24,7 +24,7 @@ class CategoryResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'image' => $this->image ? (str_starts_with($this->image, 'http') ? $this->image : url('storage/' . $this->image)) : null,
+            'image' => $this->image ? (str_starts_with($this->image, 'http') ? $this->image : url($this->image)) : null,
         ];
     }
 }

@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
@@ -56,6 +57,13 @@ class OrderController extends Controller
                 'payment_status' => 'unpaid',
             ]);
 
+            if ($request->voucher_id) {
+                $voucher = \App\Models\Voucher::find($request->voucher_id);
+                if ($voucher) {
+                    $voucher->increment('used_count');
+                }
+            }
+
             foreach ($request->items as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -102,7 +110,6 @@ class OrderController extends Controller
                 'order' => new OrderResource($order),
                 'payment_url' => $paymentUrl
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Có lỗi xảy ra khi đặt hàng: ' . $e->getMessage()], 500);

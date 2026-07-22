@@ -58,8 +58,8 @@ const BlogPage = () => {
               >
                 <div className="blog-card__img">
                   {post.thumbnail
-                    ? <img src={post.thumbnail} alt={post.title} />
-                    : <div className="blog-card__img-placeholder" />
+                    ? <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
+                    : <img src="/default-blog.png" alt={post.title} />
                   }
                 </div>
                 <div className="blog-card__body">

@@ -48,7 +48,7 @@ class ProductController extends Controller
             'brand_id' => 'required|exists:brands,id',
             'is_featured' => 'boolean',
             'status' => 'nullable|in:active,inactive,0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'variants' => 'nullable|array', // Optional variants
         ]);
 
@@ -66,15 +66,21 @@ class ProductController extends Controller
             // Handle variants if provided
             if ($request->has('variants')) {
                 foreach ($request->variants as $varData) {
+                    $capacityId = null;
+                    if (!empty($varData['capacity_value']) && !empty($varData['capacity_unit'])) {
+                        $capacity = \App\Models\Capacity::firstOrCreate([
+                            'value' => $varData['capacity_value'],
+                            'unit' => $varData['capacity_unit'],
+                        ]);
+                        $capacityId = $capacity->id;
+                    }
+
                     $variant = $product->variants()->create([
-                        'capacity_id' => $varData['capacity_id'] ?? null,
+                        'capacity_id' => $capacityId,
                         'price' => $varData['price'],
                         'sale_price' => $varData['sale_price'] ?? null,
                         'stock' => $varData['stock'] ?? 0,
                     ]);
-                    
-                    // Note: file upload for variant images in array format needs special handling
-                    // This can be expanded later if needed.
                 }
             }
             
@@ -103,7 +109,8 @@ class ProductController extends Controller
             'brand_id' => 'required|exists:brands,id',
             'is_featured' => 'boolean',
             'status' => 'nullable|in:active,inactive,0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'variants' => 'nullable|array',
         ]);
 
         if (isset($validated['name']) && $validated['name'] !== $product->name) {
@@ -119,8 +126,50 @@ class ProductController extends Controller
             $validated['image'] = '/storage/' . $path;
         }
 
-        $product->update($validated);
-        return response()->json($product);
+        DB::beginTransaction();
+        try {
+            $product->update($validated);
+
+            // Update variants
+            if ($request->has('variants')) {
+                // Delete missing variants
+                $incomingVariantIds = collect($request->variants)->pluck('id')->filter()->toArray();
+                $product->variants()->whereNotIn('id', $incomingVariantIds)->delete();
+
+                foreach ($request->variants as $varData) {
+                    $capacityId = null;
+                    if (!empty($varData['capacity_value']) && !empty($varData['capacity_unit'])) {
+                        $capacity = \App\Models\Capacity::firstOrCreate([
+                            'value' => $varData['capacity_value'],
+                            'unit' => $varData['capacity_unit'],
+                        ]);
+                        $capacityId = $capacity->id;
+                    }
+
+                    if (!empty($varData['id'])) {
+                        $product->variants()->where('id', $varData['id'])->update([
+                            'capacity_id' => $capacityId,
+                            'price' => $varData['price'],
+                            'sale_price' => $varData['sale_price'] ?? null,
+                            'stock' => $varData['stock'] ?? 0,
+                        ]);
+                    } else {
+                        $product->variants()->create([
+                            'capacity_id' => $capacityId,
+                            'price' => $varData['price'],
+                            'sale_price' => $varData['sale_price'] ?? null,
+                            'stock' => $varData['stock'] ?? 0,
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+            return response()->json($product->load('variants'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to update product', 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function destroy($id)

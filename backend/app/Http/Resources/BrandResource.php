@@ -24,7 +24,7 @@ class BrandResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'logo' => $this->logo ? url('storage/' . $this->logo) : null,
+            'logo' => $this->logo ? (str_starts_with($this->logo, 'http') ? $this->logo : url($this->logo)) : null,
         ];
     }
 }

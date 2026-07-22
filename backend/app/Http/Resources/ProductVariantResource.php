@@ -26,7 +26,7 @@ class ProductVariantResource extends JsonResource
                     'image' => $this->product->image
                         ? (str_starts_with($this->product->image, 'http')
                             ? $this->product->image
-                            : url('storage/' . $this->product->image))
+                            : url($this->product->image))
                         : null,
                 ];
             }),
@@ -34,7 +34,7 @@ class ProductVariantResource extends JsonResource
             'sale_price' => $this->sale_price,
             'stock' => $this->stock,
             'images' => $this->whenLoaded('images', function () {
-                return $this->images->map(fn ($img) => url('storage/' . $img->url));
+                return $this->images->map(fn ($img) => str_starts_with($img->url, 'http') ? $img->url : url($img->url));
             }),
         ];
     }

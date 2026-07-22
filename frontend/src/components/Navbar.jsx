@@ -98,7 +98,7 @@ const Navbar = () => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
               >
                 {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="navbar__avatar" />
+                  <img src={user.avatar.startsWith('http') ? user.avatar : `http://backend.test${user.avatar}`} alt={user.name} className="navbar__avatar" />
                 ) : (
                   <span className="navbar__avatar-placeholder">
                     {user.name?.charAt(0).toUpperCase()}

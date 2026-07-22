@@ -42,8 +42,10 @@ const CheckoutPage = () => {
   const subtotal = cartItems.reduce((s, item) => s + item.price * item.quantity, 0);
   const shippingFee = subtotal > 500000 ? 0 : 30000;
   const discount = voucher
-    ? voucher.discount_type === 'percentage'
-      ? Math.min(subtotal * voucher.discount_value / 100, subtotal)
+    ? voucher.discount_type === 'percent'
+      ? voucher.max_discount_amount 
+        ? Math.min(subtotal * voucher.discount_value / 100, voucher.max_discount_amount) 
+        : Math.min(subtotal * voucher.discount_value / 100, subtotal)
       : Math.min(voucher.discount_value, subtotal)
     : 0;
   const total = subtotal + shippingFee - discount;
@@ -271,7 +273,7 @@ const CheckoutPage = () => {
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                     <span style={{ color: 'var(--color-success)', fontSize: 13 }}>
-                      Giảm {voucher.discount_type === 'percentage'
+                      Giảm {voucher.discount_type === 'percent'
                         ? `${voucher.discount_value}%`
                         : formatPrice(voucher.discount_value)}
                     </span>

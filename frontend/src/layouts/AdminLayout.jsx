@@ -47,6 +47,11 @@ const icons = {
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   ),
+  vouchers: (
+    <svg className="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="8" width="18" height="8" rx="2" /><path d="M7 8v8"/><path d="M17 8v8"/>
+    </svg>
+  ),
   brands: (
     <svg className="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
@@ -61,6 +66,7 @@ const navItems = [
   { to: '/admin/categories', icon: icons.categories, label: 'Danh mục' },
   { to: '/admin/brands',     icon: icons.brands,     label: 'Thương hiệu' },
   { to: '/admin/orders',     icon: icons.orders,     label: 'Đơn hàng' },
+  { to: '/admin/vouchers',   icon: icons.vouchers,   label: 'Mã giảm giá' },
   { to: '/admin/flash-sales',icon: icons.flashSales, label: 'Flash Sale' },
   { to: '/admin/posts',      icon: icons.posts,      label: 'Tin tức' },
   { to: '/admin/reviews',    icon: icons.reviews,    label: 'Đánh giá' },
