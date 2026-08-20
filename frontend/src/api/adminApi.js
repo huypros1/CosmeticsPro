@@ -55,6 +55,8 @@ export const adminApi = {
   // Reviews
   getReviews: (params) => axiosClient.get('/admin/reviews', { params }),
   deleteReview: (id) => axiosClient.delete(`/admin/reviews/${id}`),
+  replyToReview: (id, reply) => axiosClient.post(`/admin/reviews/${id}/reply`, { reply }),
+  deleteReviewReply: (id) => axiosClient.delete(`/admin/reviews/${id}/reply`),
 
   // Flash Sales
   getFlashSales: (params) => axiosClient.get('/admin/flash-sales', { params }),

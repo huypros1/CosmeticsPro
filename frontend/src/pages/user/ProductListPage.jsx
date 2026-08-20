@@ -182,20 +182,30 @@ const ProductListPage = () => {
                     <button
                       className="pagination__btn"
                       disabled={page <= 1}
-                      onClick={() => updateParam('page', String(page - 1))}
+                      onClick={() => {
+                        const params = new URLSearchParams(searchParams);
+                        if (page - 1 <= 1) params.delete('page');
+                        else params.set('page', String(page - 1));
+                        setSearchParams(params);
+                      }}
                     >
                       ← Trước
                     </button>
                     <div className="pagination__pages">
                       {Array.from({ length: Math.min(totalPages, 7) }).map((_, i) => {
-                        const p = i + 1;
+                        const pageNum = i + 1;
                         return (
                           <button
-                            key={p}
-                            className={`pagination__page${page === p ? ' active' : ''}`}
-                            onClick={() => updateParam('page', String(p))}
+                            key={pageNum}
+                            className={`pagination__page${page === pageNum ? ' active' : ''}`}
+                            onClick={() => {
+                              const params = new URLSearchParams(searchParams);
+                              if (pageNum <= 1) params.delete('page');
+                              else params.set('page', String(pageNum));
+                              setSearchParams(params);
+                            }}
                           >
-                            {p}
+                            {pageNum}
                           </button>
                         );
                       })}
@@ -203,7 +213,11 @@ const ProductListPage = () => {
                     <button
                       className="pagination__btn"
                       disabled={page >= totalPages}
-                      onClick={() => updateParam('page', String(page + 1))}
+                      onClick={() => {
+                        const params = new URLSearchParams(searchParams);
+                        params.set('page', String(page + 1));
+                        setSearchParams(params);
+                      }}
                     >
                       Tiếp →
                     </button>

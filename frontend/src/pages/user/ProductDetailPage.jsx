@@ -503,6 +503,49 @@ const ProductDetailPage = () => {
                       {rev.image && (
                         <img src={rev.image} alt="Review" className="review-item__img" />
                       )}
+
+                      {/* Admin / Shop Reply */}
+                      {rev.admin_reply && (
+                        <div style={{
+                          marginTop: 14,
+                          background: 'linear-gradient(135deg, #fef9ef 0%, #fff8f0 100%)',
+                          border: '1px solid #fed7aa',
+                          borderRadius: 12,
+                          padding: '14px 16px',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <div style={{
+                              width: 28, height: 28, borderRadius: '50%',
+                              background: 'linear-gradient(135deg, var(--color-accent, #C9956A), #a0714f)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              flexShrink: 0,
+                            }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                              </svg>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>
+                                Phản hồi từ Shop
+                              </span>
+                              {rev.admin_replied_at && (
+                                <span style={{ fontSize: 11, color: '#b45309', marginLeft: 8 }}>
+                                  · {formatDate(rev.admin_replied_at)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p style={{
+                            margin: 0,
+                            fontSize: 14,
+                            color: '#78350f',
+                            lineHeight: 1.7,
+                          }}>
+                            {rev.admin_reply}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

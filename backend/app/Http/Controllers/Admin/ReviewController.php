@@ -36,6 +36,35 @@ class ReviewController extends Controller
         return $query->paginate(15);
     }
 
+    public function reply(Request $request, $id)
+    {
+        $request->validate([
+            'reply' => 'required|string|max:2000',
+        ]);
+
+        $review = Review::findOrFail($id);
+        $review->update([
+            'admin_reply'      => $request->reply,
+            'admin_replied_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Phản hồi đã được gửi',
+            'review'  => $review,
+        ]);
+    }
+
+    public function deleteReply($id)
+    {
+        $review = Review::findOrFail($id);
+        $review->update([
+            'admin_reply'      => null,
+            'admin_replied_at' => null,
+        ]);
+
+        return response()->json(['message' => 'Đã xóa phản hồi']);
+    }
+
     public function destroy($id)
     {
         $review = Review::findOrFail($id);

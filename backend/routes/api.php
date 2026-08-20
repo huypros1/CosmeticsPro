@@ -146,6 +146,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Manage Reviews
     Route::get('/reviews', [AdminReviewController::class, 'index']);
     Route::delete('/reviews/{id}', [AdminReviewController::class, 'destroy']);
+    Route::post('/reviews/{id}/reply', [AdminReviewController::class, 'reply']);
+    Route::delete('/reviews/{id}/reply', [AdminReviewController::class, 'deleteReply']);
 
     // Manage Flash Sales
     Route::apiResource('flash-sales', AdminFlashSaleController::class);
