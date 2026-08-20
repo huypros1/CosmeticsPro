@@ -377,6 +377,77 @@ ul, ol {
   color: var(--color-gray-600);
 }
 
+.badge-danger {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.badge-warning {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.badge-neutral {
+  background: var(--color-gray-100);
+  color: var(--color-text-muted);
+}
+
+/* ---------- form-control (Admin forms alias) ---------- */
+/* Alias của .form-input — dùng trong modal admin để nhất quán */
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+  font-family: inherit;
+}
+
+.form-control:focus {
+  border-color: var(--color-text-primary);
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.06);
+}
+
+.form-control::placeholder {
+  color: var(--color-text-muted);
+}
+
+.form-control.is-error,
+.form-control.is-error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+/* Error text dưới field */
+.form-error-text {
+  font-size: 11px;
+  color: var(--color-error);
+  margin-top: 2px;
+}
+
+/* Admin form layout helpers */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 540px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Divider ---------- */
 .divider {
   height: 1px;

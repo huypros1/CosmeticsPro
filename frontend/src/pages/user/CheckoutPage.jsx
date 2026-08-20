@@ -180,33 +180,20 @@ const CheckoutPage = () => {
                     )}
                   </div>
 
-                  {/* Tỉnh / Quận / Phường */}
+                  {/* Tỉnh / Phường — API v2 (2 cấp) */}
                   <AddressFormFields onAddressChange={setShippingAddressString} />
 
-                  {/* Số nhà / Tên đường */}
+                  {/* Số nhà / Tên đường (chi tiết hơn) */}
                   <div className="form-group">
-                    <label className="form-label">Số nhà, tên đường</label>
+                    <label className="form-label">
+                      Số nhà, tên đường <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(tùy chọn)</span>
+                    </label>
                     <input
                       className="form-input"
-                      placeholder="VD: 123 Nguyễn Huệ"
+                      placeholder="VD: 123 Nguyễn Huệ, Tầng 2"
                       {...register('street')}
                     />
                   </div>
-
-                  {/* Preview địa chỉ đầy đủ */}
-                  {shippingAddressString && (
-                    <div style={{
-                      padding: '10px 14px',
-                      background: 'var(--color-gray-50)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: 13,
-                      color: 'var(--color-text-secondary)',
-                      borderLeft: '3px solid var(--color-primary)',
-                    }}>
-                      <strong>📍 Địa chỉ giao hàng:</strong>{' '}
-                      {[streetValue, shippingAddressString].filter(Boolean).join(', ')}
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -241,9 +228,7 @@ const CheckoutPage = () => {
 
                 {paymentMethod === 'vietqr' && (
                   <div className="vietqr-info-box">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, color: '#0ea5e9' }}>
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
+                    <i className="bi bi-info-circle-fill" style={{ flexShrink: 0, color: '#0ea5e9', fontSize: 16 }} />
                     <p>Sau khi đặt hàng, mã QR sẽ hiện lên để bạn quét thanh toán ngay bằng ứng dụng bất kỳ ngân hàng nội địa.</p>
                   </div>
                 )}
@@ -252,40 +237,75 @@ const CheckoutPage = () => {
               {/* Voucher */}
               <div className="checkout-section">
                 <h3 className="checkout-section__title">Mã giảm giá</h3>
+
+                {/* Input row */}
                 <div className="voucher-input">
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Nhập mã voucher..."
+                    placeholder="Nhập mã voucher (VD: SUMMER30)"
                     value={voucherCode}
-                    onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      setVoucherCode(e.target.value.toUpperCase());
+                      // Xoá voucher cũ khi user sửa mã
+                      if (voucher) { setVoucher(null); setDiscountAmount(0); }
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyVoucher())}
+                    style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}
+                    disabled={!!voucher}
                   />
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={handleApplyVoucher}
-                    disabled={voucherLoading}
-                  >
-                    {voucherLoading ? '...' : 'Áp dụng'}
-                  </button>
-                </div>
-                {voucher && (
-                  <div className="voucher-applied">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <span style={{ color: 'var(--color-success)', fontSize: 13 }}>
-                      Giảm {voucher.discount_type === 'percent'
-                        ? `${voucher.discount_value}%`
-                        : formatPrice(voucher.discount_value)}
-                    </span>
+                  {voucher ? (
                     <button
                       type="button"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', fontSize: 13 }}
+                      className="btn btn-outline"
                       onClick={() => { setVoucher(null); setVoucherCode(''); setDiscountAmount(0); }}
+                      style={{ whiteSpace: 'nowrap', color: 'var(--color-error)', borderColor: 'var(--color-error)' }}
                     >
                       Xóa
                     </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={handleApplyVoucher}
+                      disabled={voucherLoading || !voucherCode.trim()}
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      {voucherLoading
+                        ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span className="spinner-sm" style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: 'currentColor', width: 13, height: 13 }}/>
+                            Đang kiểm tra...
+                          </span>
+                        : 'Áp dụng'}
+                    </button>
+                  )}
+                </div>
+
+                {/* Applied success */}
+                {voucher && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 14px', marginTop: 10,
+                    background: 'var(--color-success-bg)',
+                    border: '1px solid rgba(34,197,94,0.25)',
+                    borderRadius: 'var(--radius-sm)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bi bi-check-circle-fill" style={{ fontSize: 14, color: 'var(--color-success)', flexShrink: 0 }} />
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--color-success)' }}>
+                          {voucher.code}
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--color-success)', opacity: 0.8, marginLeft: 8 }}>
+                          — Tiết kiệm {formatPrice(discountAmount)}
+                        </span>
+                        {voucher.description && (
+                          <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
+                            {voucher.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

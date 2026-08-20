@@ -39,6 +39,7 @@ import BlogPage from './pages/user/BlogPage';
 import BlogDetailPage from './pages/user/BlogDetailPage';
 import ProfilePage from './pages/user/ProfilePage';
 import VietQRPaymentPage from './pages/user/VietQRPaymentPage';
+import ContactPage from './pages/user/ContactPage';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -89,6 +90,7 @@ const App = () => {
                 <Route path="/products/:slug" element={<ProductDetailPage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogDetailPage />} />
+                <Route path="/contact" element={<ContactPage />} />
 
                 {/* Protected */}
                 <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />

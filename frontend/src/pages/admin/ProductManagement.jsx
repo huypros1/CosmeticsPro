@@ -205,7 +205,7 @@ const ProductManagement = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Sản phẩm</h1>
         <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+          <i className="bi bi-plus-lg" />
           Thêm Sản phẩm
         </button>
       </div>

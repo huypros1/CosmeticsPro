@@ -88,63 +88,58 @@ const HomePage = () => {
 
   return (
     <div className="home-page">
-      {/* ── Premium Hero ── */}
-      <section className="hero">
-        {/* Decorative blur blobs */}
-        <div className="hero__blob hero__blob--1"></div>
-        <div className="hero__blob hero__blob--2"></div>
-        
-        <div className="container hero__inner">
-          <div className="hero__content">
-            <div className="hero__label text-label" style={{ color: '#c98a6c', letterSpacing: '2px' }}>✨ PHIÊN BẢN GIỚI HẠN 2026</div>
-            <h1 className="hero__title" style={{ color: '#2c2c2c' }}>
-              Đánh thức vẻ đẹp<br />
-              <em style={{ color: '#c98a6c', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 500 }}>rạng rỡ</em><br />
-              từ bên trong
-            </h1>
-            <p className="hero__desc" style={{ fontSize: '1.1rem', color: '#555', maxWidth: 480, lineHeight: 1.8 }}>
-              Trải nghiệm sự tinh khiết của thiên nhiên qua bộ sưu tập mỹ phẩm cao cấp. 
-              Được chế tác để nuôi dưỡng, bảo vệ và tôn vinh vẻ đẹp độc bản của bạn mỗi ngày.
-            </p>
-            <div className="hero__actions" style={{ marginTop: '10px' }}>
-              <Link to="/products" className="btn btn-primary btn-lg" style={{ borderRadius: '30px', padding: '14px 32px', boxShadow: '0 10px 25px rgba(201,149,106,0.3)' }}>Khám phá ngay</Link>
-              <Link to="/blog" className="btn btn-outline btn-lg" style={{ borderRadius: '30px', padding: '14px 32px', border: '1px solid #d1d5db', color: '#4b5563', background: 'rgba(255,255,255,0.5)' }}>Tìm hiểu thêm</Link>
-            </div>
-            <div className="hero__stats" style={{ marginTop: '20px', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '20px' }}>
-              <div className="hero__stat">
-                <span className="hero__stat-number" style={{ color: '#c98a6c' }}>98%</span>
-                <span className="hero__stat-label">Hài lòng</span>
-              </div>
-              <div className="hero__stat-divider" style={{ background: 'rgba(0,0,0,0.08)' }} />
-              <div className="hero__stat">
-                <span className="hero__stat-number" style={{ color: '#c98a6c' }}>50+</span>
-                <span className="hero__stat-label">Thương hiệu</span>
-              </div>
-              <div className="hero__stat-divider" style={{ background: 'rgba(0,0,0,0.08)' }} />
-              <div className="hero__stat">
-                <span className="hero__stat-number" style={{ color: '#c98a6c' }}>10K+</span>
-                <span className="hero__stat-label">Khách hàng</span>
-              </div>
-            </div>
+      {/* ── Editorial Hero ── */}
+      <section className="hero-ed">
+        {/* Full-width background image */}
+        <div className="hero-ed__bg">
+          <img
+            src="https://images.pexels.com/photos/3785147/pexels-photo-3785147.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop"
+            alt="HQCosmetic background"
+          />
+          <div className="hero-ed__bg-overlay" />
+        </div>
+
+        {/* Top announcement bar */}
+        <div className="hero-ed__topbar">
+          <span>Bộ sưu tập mới — Fall 2026</span>
+          <Link to="/products" className="hero-ed__topbar-link">
+            Xem ngay <i className="bi bi-arrow-right" />
+          </Link>
+        </div>
+
+        {/* Center content — sits on top of background */}
+        <div className="hero-ed__center">
+          <p className="hero-ed__label">Mỹ phẩm cao cấp · Hàng chính hãng</p>
+
+          <h1 className="hero-ed__title">
+            Vẻ đẹp đích thực<br />
+            bắt đầu từ việc<br />
+            <em>chăm sóc đúng cách.</em>
+          </h1>
+
+          <p className="hero-ed__desc">
+            Hơn 50 thương hiệu quốc tế — được kiểm định và phân phối chính hãng tại Việt Nam.
+          </p>
+
+          <div className="hero-ed__actions">
+            <Link to="/products" className="hero-ed__btn-fill">Mua sắm ngay</Link>
+            <Link to="/blog" className="hero-ed__btn-line">Bí quyết làm đẹp</Link>
           </div>
-          <div className="hero__visual">
-            <div className="hero__img-frame" style={{ overflow: 'hidden', borderRadius: '30px 100px 30px 30px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', border: '8px solid rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)' }}>
-              <img
-                src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=1200"
-                alt="Premium Cosmetics"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.02)' }}
-              />
+        </div>
+
+        {/* Trust strip at bottom of hero */}
+        <div className="hero-ed__strip">
+          {[
+            { icon: 'bi-patch-check', text: '100% hàng chính hãng' },
+            { icon: 'bi-truck', text: 'Miễn phí ship đơn 500K+' },
+            { icon: 'bi-arrow-counterclockwise', text: 'Đổi trả trong 30 ngày' },
+            { icon: 'bi-headset', text: 'Tư vấn 24/7' },
+          ].map((item) => (
+            <div key={item.text} className="hero-ed__strip-item">
+              <i className={`bi ${item.icon}`} />
+              <span>{item.text}</span>
             </div>
-            {/* Glassmorphism Tags */}
-            <div className="hero__tag hero__tag--1" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '20px', padding: '12px 20px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-              <span style={{ background: '#ecfdf5', color: '#10b981', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontSize: 12 }}>✓</span>
-              <span style={{ color: '#1f2937', fontWeight: 600, fontSize: 13 }}>Thành phần tự nhiên</span>
-            </div>
-            <div className="hero__tag hero__tag--2" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: '20px', padding: '12px 20px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-              <span style={{ color: '#fbbf24', fontSize: 16 }}>★</span>
-              <span style={{ color: '#1f2937', fontWeight: 600, fontSize: 13 }}>4.9/5 Đánh giá</span>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 

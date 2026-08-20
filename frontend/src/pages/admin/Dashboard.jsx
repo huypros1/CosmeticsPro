@@ -146,29 +146,22 @@ const Dashboard = () => {
   const chartLabels = (chart_data || []).map(d => d.label);
   const salesData = (chart_data || []).map(d => d.sales);
 
-  const lineChartData = {
+  const barChartData = {
     labels: chartLabels,
     datasets: [{
       label: 'Doanh thu (VND)',
       data: salesData,
-      fill: true,
-      borderColor: '#6366f1',
-      backgroundColor: (ctx) => {
-        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 250);
-        gradient.addColorStop(0, 'rgba(99,102,241,0.2)');
-        gradient.addColorStop(1, 'rgba(99,102,241,0)');
-        return gradient;
-      },
-      borderWidth: 2.5,
-      pointRadius: 4,
-      pointBackgroundColor: '#6366f1',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      tension: 0.4,
+      backgroundColor: 'rgba(99,102,241,0.85)',
+      hoverBackgroundColor: 'rgba(99,102,241,1)',
+      borderColor: 'transparent',
+      borderRadius: 6,
+      borderSkipped: false,
+      barPercentage: 0.6,
+      categoryPercentage: 0.7,
     }],
   };
 
-  const lineChartOptions = {
+  const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -188,9 +181,11 @@ const Dashboard = () => {
       x: {
         grid: { display: false },
         ticks: { color: '#9ca3af', font: { size: 12 } },
+        border: { display: false },
       },
       y: {
-        grid: { color: '#f3f4f6', borderDash: [4, 4] },
+        grid: { color: '#f3f4f6', lineWidth: 1 },
+        border: { display: false, dash: [4, 4] },
         ticks: {
           color: '#9ca3af', font: { size: 11 },
           callback: (v) => v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}K` : v,
@@ -259,28 +254,28 @@ const Dashboard = () => {
           value={s.total_revenue >= 1000000 ? `${(s.total_revenue / 1000000).toFixed(1)}M` : `${Math.round((s.total_revenue || 0) / 1000)}K`}
           sub="₫ từ đơn đã hoàn tất"
           iconBg="#eef2ff" iconColor="#6366f1"
-          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
+          icon={<i className="bi bi-currency-dollar" style={{ fontSize: 22 }} />}
         />
         <StatCard
           label="Đơn hàng" to="/admin/orders"
           value={s.total_orders || 0}
           sub="tổng tất cả trạng thái"
           iconBg="#f0fdf4" iconColor="#16a34a"
-          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>}
+          icon={<i className="bi bi-cart-check" style={{ fontSize: 22 }} />}
         />
         <StatCard
           label="Sản phẩm" to="/admin/products"
           value={s.total_products || 0}
           sub="đang kinh doanh"
           iconBg="#fefce8" iconColor="#ca8a04"
-          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>}
+          icon={<i className="bi bi-box-seam" style={{ fontSize: 22 }} />}
         />
         <StatCard
           label="Khách hàng" to="/admin/users"
           value={s.total_users || 0}
           sub="đã đăng ký tài khoản"
           iconBg="#fdf4ff" iconColor="#9333ea"
-          icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+          icon={<i className="bi bi-people" style={{ fontSize: 22 }} />}
         />
       </div>
 
@@ -305,7 +300,7 @@ const Dashboard = () => {
           </div>
           <div style={{ padding: '20px', height: 260, flex: 1 }}>
             {chartLabels.length > 0
-              ? <Line data={lineChartData} options={lineChartOptions} />
+              ? <Bar data={barChartData} options={barChartOptions} />
               : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 13 }}>Chưa có dữ liệu</div>
             }
           </div>
@@ -357,7 +352,7 @@ const Dashboard = () => {
           </div>
           <Link to="/admin/orders" style={{ fontSize: 12, color: '#6366f1', textDecoration: 'none', fontWeight: 600, padding: '6px 14px', background: '#eef2ff', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
             Xem tất cả
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <i className="bi bi-arrow-right" style={{ fontSize: 12 }} />
           </Link>
         </div>
 

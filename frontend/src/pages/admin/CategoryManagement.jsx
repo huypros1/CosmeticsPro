@@ -107,7 +107,7 @@ const CategoryManagement = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: '24px' }}>Quản lý Danh mục</h1>
         <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14m-7-7h14"/></svg>
+          <i className="bi bi-plus-lg" />
           Thêm Danh mục
         </button>
       </div>
@@ -150,7 +150,9 @@ const CategoryManagement = () => {
                   <td>
                     {cat.image
                       ? <img src={cat.image.startsWith('http') ? cat.image : `http://backend.test${cat.image}`} alt={cat.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
-                      : <div style={{ width: 48, height: 48, background: 'var(--color-gray-100)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📂</div>
+                      : <div style={{ width: 48, height: 48, background: 'var(--color-gray-100)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <i className="bi bi-folder2" style={{ fontSize: 22, color: 'var(--color-text-muted)' }} />
+                        </div>
                     }
                   </td>
                   <td style={{ fontWeight: 600 }}>{cat.name}</td>
@@ -230,7 +232,7 @@ const CategoryManagement = () => {
                     </>
                   ) : (
                     <div style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                      <div style={{ fontSize: 36, marginBottom: 6 }}>🖼️</div>
+                      <i className="bi bi-image" style={{ fontSize: 36, marginBottom: 6, display: 'block' }} />
                       <p style={{ fontSize: 13, margin: 0 }}>Chưa có ảnh</p>
                     </div>
                   )}
@@ -245,7 +247,8 @@ const CategoryManagement = () => {
 
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => fileRef.current?.click()}>
-                  {imagePreview ? '🔄 Đổi ảnh' : '📁 Chọn ảnh'}
+                  <i className={`bi ${imagePreview ? 'bi-arrow-repeat' : 'bi-folder2-open'}`} />
+                  {imagePreview ? ' Đổi ảnh' : ' Chọn ảnh'}
                 </button>
               </div>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

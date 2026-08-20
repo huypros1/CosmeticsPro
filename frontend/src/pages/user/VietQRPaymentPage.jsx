@@ -127,12 +127,7 @@ const VietQRPaymentPage = () => {
     return (
       <div className="qrpage-container">
         <div className="qrpage-card qrpage-card--success">
-          <div className="qrpage-success-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" className="qrpage-success-circle"/>
-              <polyline points="20 6 9 17 4 12" className="qrpage-success-check"/>
-            </svg>
-          </div>
+          <i className="bi bi-check-circle-fill qrpage-success-icon-bi" />
           <h2 className="qrpage-success-title">Thanh toán thành công! 🎉</h2>
           <p className="qrpage-success-sub">Đơn hàng #{orderId} của bạn đã được xác nhận.</p>
           <p style={{ color: '#94a3b8', fontSize: 13 }}>Đang chuyển đến trang đơn hàng...</p>
@@ -168,12 +163,7 @@ const VietQRPaymentPage = () => {
             />
           ) : (
             <div className="qrpage-qr-placeholder">
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1">
-                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/>
-                <rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
-              </svg>
+              <i className="bi bi-qr-code" style={{ fontSize: 56, color: '#cbd5e1' }} />
               <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 8 }}>Không tải được QR</p>
             </div>
           )}

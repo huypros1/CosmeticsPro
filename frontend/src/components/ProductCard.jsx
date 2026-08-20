@@ -71,12 +71,7 @@ const ProductCard = ({ product }) => {
             onError={(e) => { e.target.onerror = null; e.target.src = '/default-product.png'; }}
           />
         ) : (
-          <img
-            src="/default-product.png"
-            alt={product.name || "Default Product"}
-            className="product-card__img"
-            loading="lazy"
-          />
+          <img src="/default-product.png" alt={product.name || 'Default Product'} className="product-card__img" loading="lazy" />
         )}
 
         {/* Badges */}
@@ -96,9 +91,7 @@ const ProductCard = ({ product }) => {
             onClick={handleWishlist}
             title="Yêu thích"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={wishlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
+            <i className={`bi ${wishlisted ? 'bi-heart-fill' : 'bi-heart'}`} style={{ fontSize: 15 }} />
           </button>
           <button
             className="product-card__action-btn product-card__action-btn--cart"
@@ -106,15 +99,9 @@ const ProductCard = ({ product }) => {
             disabled={addingCart || !variant}
             title="Thêm vào giỏ"
           >
-            {addingCart ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="spin">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
-              </svg>
-            )}
+            {addingCart
+              ? <i className="bi bi-arrow-repeat spin" style={{ fontSize: 15 }} />
+              : <i className="bi bi-bag-plus" style={{ fontSize: 15 }} />}
           </button>
         </div>
       </div>

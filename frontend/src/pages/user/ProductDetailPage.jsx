@@ -212,10 +212,7 @@ const ProductDetailPage = () => {
                 />
               ) : (
                 <div className="product-gallery__placeholder">
-                  <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.3">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
-                  </svg>
+                  <i className="bi bi-image" style={{ fontSize: 60, opacity: 0.3 }} />
                 </div>
               )}
 
@@ -374,9 +371,10 @@ const ProductDetailPage = () => {
                 title="Thêm vào yêu thích"
                 style={{ width: 52, height: 52, flexShrink: 0 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill={wishlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
+                <i
+                  className={`bi ${wishlisted ? 'bi-heart-fill' : 'bi-heart'}`}
+                  style={{ fontSize: 20, color: wishlisted ? 'var(--color-error)' : 'currentColor' }}
+                />
               </button>
             </div>
 
@@ -520,10 +518,7 @@ const ProductDetailPage = () => {
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               flexShrink: 0,
                             }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                <polyline points="9 22 9 12 15 12 15 22"/>
-                              </svg>
+                              <i className="bi bi-house-fill" style={{ fontSize: 14, color: 'white' }} />
                             </div>
                             <div>
                               <span style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>

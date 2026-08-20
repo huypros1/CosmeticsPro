@@ -73,9 +73,7 @@ const ReviewItemForm = ({ product, onReviewSubmitted }) => {
 
       {submitted ? (
         <div className="review-order-item__done">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+          <i className="bi bi-check-circle-fill" style={{ fontSize: 20, color: 'var(--color-success)' }} />
           <span>Đã đánh giá</span>
         </div>
       ) : (
@@ -297,7 +295,7 @@ const OrderDetailPage = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                   <div>
                     <h3 style={{ margin: 0, fontSize: 18, color: '#A06B43', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                      <i className="bi bi-star-fill" style={{ fontSize: 20, color: '#A06B43' }} />
                       Đánh giá sản phẩm
                     </h3>
                     <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '4px 0 0' }}>Hãy chia sẻ cảm nhận của bạn về sản phẩm nhé!</p>
@@ -326,7 +324,7 @@ const OrderDetailPage = () => {
             {/* Delivery Address Card */}
             <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
               <h3 style={{ margin: '0 0 16px', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <i className="bi bi-geo-alt-fill" style={{ fontSize: 18, color: 'var(--color-accent)' }} />
                 Địa chỉ nhận hàng
               </h3>
               {order.shipping_address ? (
