@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { adminApi } from '../../api/adminApi';
 import { productApi } from '../../api/productApi';
+import { getImgUrl } from '../../utils/helpers';
 
 const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
 
@@ -8,7 +9,7 @@ const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', c
 const getImgSrc = (src) => {
   if (!src) return null;
   if (src.startsWith('blob:') || src.startsWith('http')) return src;
-  return `http://backend.test${src}`;
+  return getImgUrl(src);
 };
 
 const emptyForm = {
@@ -269,7 +270,7 @@ const ProductManagement = () => {
                   <td>#{p.id}</td>
                   <td>
                     {p.image
-                      ? <img src={p.image.startsWith('http') ? p.image : `http://backend.test${p.image}`} alt={p.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} />
+                      ? <img src={getImgUrl(p.image)} alt={p.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} />
                       : <div style={{ width: 52, height: 52, background: 'var(--color-gray-100)', borderRadius: 8 }} />
                     }
                   </td>
@@ -467,7 +468,7 @@ const ProductManagement = () => {
                     {galleryImages.map((img) => (
                       <div key={img.id} style={{ position: 'relative', width: 90, height: 90 }}>
                         <img
-                          src={img.url?.startsWith('http') ? img.url : `http://backend.test${img.url}`}
+                          src={getImgUrl(img.url)}
                           alt="gallery"
                           style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }}
                           onError={(e) => { e.target.style.opacity = '0.3'; }}

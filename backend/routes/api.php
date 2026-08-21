@@ -48,6 +48,7 @@ Route::get('/products/{slug}/related', [ProductController::class, 'related']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/brands', [BrandController::class, 'index']);
+Route::get('/reviews/recent', [ReviewController::class, 'recent']);
 Route::get('/reviews/{productId}', [ReviewController::class, 'index']);
 
 // Blog
@@ -59,6 +60,14 @@ Route::post('/vouchers/validate', [VoucherController::class, 'validateVoucher'])
 
 // Flash Sales (public)
 Route::get('/flash-sales/active', [FlashSaleController::class, 'active']);
+
+// SePay IPN webhook (public - SePay server gọi vào đây)
+Route::post('/payment/sepay/ipn', [PaymentController::class, 'sePayIPN']);
+Route::post('/payment-success', [PaymentController::class, 'sePayIPN']); // IPN route cho cấu hình mới
+
+// SePay Bank Webhook
+Route::post('/payment/order_success', [PaymentController::class, 'sepayWebhook']);
+
 
 
 /*
@@ -99,8 +108,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
     Route::get('/orders/{orderId}/reviewable', [ReviewController::class, 'reviewableByOrder']);
 
-    // Payment - VietQR
-    Route::post('/payment/vietqr', [PaymentController::class, 'generateVietQR']);
+    // Payment - SePay
+    Route::post('/payment/sepay/create-checkout', [PaymentController::class, 'sePayCreateCheckout']);
+    Route::post('/payment/sepay/callback', [PaymentController::class, 'sePayCallback']);
     Route::get('/payment/status/{orderId}', [PaymentController::class, 'checkStatus']);
 });
 

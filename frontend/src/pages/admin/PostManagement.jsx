@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { adminApi } from '../../api/adminApi';
+import { Editor } from '@tinymce/tinymce-react';
+import { getImgUrl } from '../../utils/helpers';
 
 /* ────────────────────────────────────────────────────────── helpers */
 const getImgSrc = (src) => {
   if (!src) return null;
   if (src.startsWith('blob:') || src.startsWith('http')) return src;
-  return `http://backend.test${src}`;
+  return getImgUrl(src);
 };
 
 const statusMap = {
@@ -142,8 +144,9 @@ const PostManagement = () => {
   const validate = () => {
     const e = {};
     if (!form.title.trim())               e.title = 'Tiêu đề là bắt buộc.';
+    const textContent = form.content.replace(/<[^>]+>/g, '').trim();
     if (!form.content.trim())             e.content = 'Nội dung là bắt buộc.';
-    else if (form.content.trim().length < 50)
+    else if (textContent.length < 50)
       e.content = 'Nội dung phải có ít nhất 50 ký tự.';
     if (form.meta_title.length > 60)      e.meta_title = 'Meta Title tối đa 60 ký tự.';
     if (form.meta_description.length > 160)
@@ -452,13 +455,34 @@ const PostManagement = () => {
                     {/* Nội dung */}
                     <div className="form-group" style={{ marginBottom: 16 }}>
                       <label className="form-label">Nội dung *</label>
-                      <textarea className="form-textarea" rows={12} value={form.content} onChange={set('content')}
-                        placeholder="Nhập nội dung bài viết... (tối thiểu 50 ký tự)"
-                        style={{ borderColor: errors.content ? '#ef4444' : undefined, fontFamily: 'monospace', fontSize: 13 }} />
+                      <div style={{ border: errors.content ? '1px solid #ef4444' : 'none', borderRadius: 4, overflow: 'hidden' }}>
+                        <Editor
+                          apiKey={import.meta.env.VITE_TINYMCE_API_KEY || '0vku09w6tdbawpejdkd4gm8y4bs2ggz459qs2yabuz8zeccr'}
+                          value={form.content}
+                          onEditorChange={(content) => {
+                            setForm(prev => ({ ...prev, content }));
+                            if (errors.content) setErrors(prev => ({ ...prev, content: '' }));
+                          }}
+                          init={{
+                            height: 400,
+                            menubar: false,
+                            plugins: [
+                              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                            ],
+                            toolbar: 'undo redo | blocks | ' +
+                              'bold italic forecolor | alignleft aligncenter ' +
+                              'alignright alignjustify | bullist numlist outdent indent | ' +
+                              'removeformat | image | help',
+                            content_style: 'body { font-family:Inter,Arial,sans-serif; font-size:14px }'
+                          }}
+                        />
+                      </div>
                       {errors.content && <p style={{ color: '#ef4444', fontSize: 12, margin: '4px 0 0' }}>{errors.content}</p>}
                       <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>
-                        {form.content.trim().length} ký tự
-                        {form.content.trim().length > 0 && ` • ~${Math.ceil(form.content.trim().split(/\s+/).length / 200)} phút đọc`}
+                        {form.content.replace(/<[^>]+>/g, '').trim().length} ký tự
+                        {form.content.trim().length > 0 && ` • ~${Math.ceil(form.content.replace(/<[^>]+>/g, '').trim().split(/\s+/).length / 200)} phút đọc`}
                       </p>
                     </div>
 

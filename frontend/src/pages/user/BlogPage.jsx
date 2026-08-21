@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { postApi } from '../../api/postApi';
 
 const formatDate = (d) =>
@@ -21,6 +22,14 @@ const BlogPage = () => {
 
   return (
     <div className="blog-page">
+      <Helmet>
+        <title>{category ? `Tin tức ${category} | HQCosmetic` : 'Blog Làm Đẹp & Tin Tức | HQCosmetic'}</title>
+        <meta name="description" content="Khám phá các tips chăm sóc da, hướng dẫn trang điểm và xu hướng làm đẹp mới nhất cùng HQCosmetic." />
+        <meta property="og:title" content={category ? `Tin tức ${category} | HQCosmetic` : 'Blog Làm Đẹp & Tin Tức | HQCosmetic'} />
+        <meta property="og:description" content="Khám phá các tips chăm sóc da, hướng dẫn trang điểm và xu hướng làm đẹp mới nhất cùng HQCosmetic." />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
       {/* Header */}
       <div className="blog-page__hero">
         <div className="container">
@@ -58,7 +67,7 @@ const BlogPage = () => {
               >
                 <div className="blog-card__img">
                   {post.thumbnail
-                    ? <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
+                    ? <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
                     : <img src="/default-blog.png" alt={post.title} />
                   }
                 </div>

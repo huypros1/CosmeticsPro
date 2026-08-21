@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { getImgUrl } from '../utils/helpers';
+import { productApi } from '../api/productApi';
+
+const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -13,6 +17,30 @@ const Navbar = () => {
   const userMenuRef = useRef(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Thêm effect debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        // Tận dụng api getProducts có hỗ trợ q (search)
+        const res = await productApi.getProducts({ search: searchQuery.trim(), per_page: 4 });
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        setSearchResults(list.slice(0, 4));
+      } catch (err) {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400); // Đợi 400ms sau khi người dùng ngừng gõ
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -89,7 +117,7 @@ const Navbar = () => {
             <div className="navbar__user" ref={userMenuRef}>
               <button className="navbar__user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
                 {user.avatar ? (
-                  <img src={user.avatar.startsWith('http') ? user.avatar : `http://backend.test${user.avatar}`} alt={user.name} className="navbar__avatar" />
+                  <img src={getImgUrl(user.avatar)} alt={user.name} className="navbar__avatar" />
                 ) : (
                   <span className="navbar__avatar-placeholder">
                     {user.name?.charAt(0).toUpperCase()}
@@ -139,22 +167,83 @@ const Navbar = () => {
       {/* Search Overlay */}
       {searchOpen && (
         <div className="navbar__search-overlay">
-          <form onSubmit={handleSearch} className="navbar__search-form">
-            <input
-              type="text"
-              className="navbar__search-input"
-              placeholder="Tìm kiếm sản phẩm..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus
-            />
-            <button type="submit" className="btn btn-primary btn-sm">
-              <i className="bi bi-search" />
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSearchOpen(false)}>
-              <i className="bi bi-x-lg" />
-            </button>
-          </form>
+          <div className="navbar__search-container" style={{ position: 'relative', width: '100%', maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
+            <form onSubmit={handleSearch} className="navbar__search-form" style={{ width: '100%' }}>
+              <input
+                type="text"
+                className="navbar__search-input"
+                placeholder="Tìm kiếm sản phẩm..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                style={{ width: '100%' }}
+              />
+              <button type="submit" className="btn btn-primary btn-sm">
+                <i className="bi bi-search" />
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
+                <i className="bi bi-x-lg" />
+              </button>
+            </form>
+            
+            {/* Search Dropdown */}
+            {searchQuery.trim() && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px',
+                background: '#fff', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                border: '1px solid #f3f4f6', overflow: 'hidden', zIndex: 1000
+              }}>
+                {isSearching ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>Đang tìm kiếm...</div>
+                ) : searchResults.length > 0 ? (
+                  <>
+                    {searchResults.map(product => (
+                      <Link 
+                        key={product.id} 
+                        to={`/products/${product.slug}`} 
+                        onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', padding: '12px 16px', gap: '16px',
+                          borderBottom: '1px solid #f3f4f6', textDecoration: 'none', color: 'inherit',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <img 
+                          src={getImgUrl(product.image)} 
+                          alt={product.name} 
+                          style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '8px', border: '1px solid #e5e7eb' }} 
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                          <span style={{ fontWeight: 600, fontSize: '14px', color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {product.name}
+                          </span>
+                          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-primary)' }}>
+                            {formatPrice(product.price)}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                    <Link 
+                      to={`/products?q=${encodeURIComponent(searchQuery.trim())}`}
+                      onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                      style={{
+                        display: 'block', padding: '12px', textAlign: 'center', color: 'var(--color-primary)',
+                        fontSize: '13px', fontWeight: 600, background: '#f8fafc', textDecoration: 'none'
+                      }}
+                    >
+                      Xem tất cả kết quả tìm kiếm "{searchQuery}" <i className="bi bi-arrow-right"></i>
+                    </Link>
+                  </>
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
+                    Không tìm thấy sản phẩm nào phù hợp
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

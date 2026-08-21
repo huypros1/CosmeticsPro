@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { orderApi } from '../../api/orderApi';
 import { voucherApi } from '../../api/voucherApi';
@@ -7,23 +7,33 @@ import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import AddressFormFields from '../../components/AddressFormFields';
+import axiosClient from '../../api/axiosClient';
+import { ghnApi } from '../../api/ghnApi';
 
 const formatPrice = (p) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
 
 const CheckoutPage = () => {
   const { cartItems, fetchCart } = useCart();
+  const location = useLocation();
+  const checkoutItemsToUse = location.state?.items || cartItems;
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const sePayFormRef = useRef(null);
 
   const [voucherCode, setVoucherCode] = useState('');
-  const [voucher, setVoucher] = useState(null);          // object voucher
-  const [discountAmount, setDiscountAmount] = useState(0); // số tiền giảm thực tế (từ server)
+  const [voucher, setVoucher] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [shippingAddressString, setShippingAddressString] = useState('');
+  const [sePayFormData, setSePayFormData] = useState(null);
+  
+  // GHN Shipping Fee
+  const [ghnShippingFee, setGhnShippingFee] = useState(null);
+  const [fetchingFee, setFetchingFee] = useState(false);
 
   const {
     register,
@@ -39,9 +49,19 @@ const CheckoutPage = () => {
   });
   const streetValue = watch('street');
 
-  /* ── Tính tiền ── */
-  const subtotal    = cartItems.reduce((s, item) => s + item.price * item.quantity, 0);
-  const shippingFee = subtotal > 500000 ? 0 : 30000;
+  /* ── Tính tiền & Khối lượng ── */
+  const subtotal    = checkoutItemsToUse.reduce((s, item) => s + item.price * item.quantity, 0);
+  
+  // Tính tổng khối lượng dựa vào dung tích (ml/g) của biến thể.
+  // Giả sử 1ml tương đương 1g. Thêm 200g trọng lượng vỏ hộp bao bì.
+  const totalWeight = checkoutItemsToUse.reduce((sum, item) => {
+    const val = Number(item.variant?.capacity?.value) || 0;
+    return sum + (val * item.quantity);
+  }, 0);
+  const calculatedWeight = totalWeight > 0 ? totalWeight + 200 : 1000; // Mặc định 1kg nếu không có thông số
+
+  const calculatedShipping = ghnShippingFee !== null ? ghnShippingFee : 30000;
+  const shippingFee = subtotal > 500000 ? 0 : calculatedShipping;
   // discount dùng giá trị trả về từ server, không tự tính lại
   const discount    = discountAmount;
   const total       = subtotal + shippingFee - discount;
@@ -65,18 +85,51 @@ const CheckoutPage = () => {
     }
   };
 
+  /* ── Lấy phí ship GHN ── */
+  const handleLocationSelect = async (loc) => {
+    if (!loc) {
+      setGhnShippingFee(null);
+      return;
+    }
+    try {
+      setFetchingFee(true);
+      // 1. Lấy dịch vụ khả dụng
+      const services = await ghnApi.getAvailableServices(loc.district_id);
+      const serviceId = services.data?.[0]?.service_id;
+      if (!serviceId) {
+        toast.warning('Không tìm thấy gói vận chuyển cho khu vực này.');
+        return;
+      }
+      // 2. Tính phí
+      const feeRes = await ghnApi.calculateFee({
+        service_id: serviceId,
+        insurance_value: Math.min(subtotal, 5000000), // GHN max bảo hiểm thường 5tr
+        to_district_id: loc.district_id,
+        to_ward_code: loc.ward_code,
+        weight: calculatedWeight
+      });
+      setGhnShippingFee(feeRes.data?.total || 30000);
+    } catch (err) {
+      console.error(err);
+      toast.error('Không thể tính phí vận chuyển GHN. Dùng mức phí mặc định.');
+      setGhnShippingFee(30000);
+    } finally {
+      setFetchingFee(false);
+    }
+  };
+
   /* ── Đặt hàng ── */
   const handlePlaceOrder = async (formData) => {
     if (!shippingAddressString.trim()) {
       toast.warning('Vui lòng chọn đầy đủ tỉnh/thành, quận/huyện, phường/xã');
       return;
     }
-    if (cartItems.length === 0) {
+    if (checkoutItemsToUse.length === 0) {
       toast.warning('Giỏ hàng trống');
       return;
     }
 
-    const orderItems = cartItems.map((i) => ({
+    const orderItems = checkoutItemsToUse.map((i) => ({
       variant_id: i.variant?.id ?? i.variant_id,
       quantity:   i.quantity,
       price:      i.price,
@@ -108,8 +161,21 @@ const CheckoutPage = () => {
       await fetchCart();
       const orderId = res?.order?.id ?? res?.order?.data?.id ?? res?.id;
 
-      if (paymentMethod === 'vietqr') {
-        navigate(`/payment/vietqr/${orderId}`);
+      if (paymentMethod === 'sepay') {
+        // Gọi backend để lấy form fields đã ký HMAC
+        const baseUrl = window.location.origin;
+        const checkoutRes = await axiosClient.post('/payment/sepay/create-checkout', {
+          order_id:    orderId,
+          amount:      total,
+          success_url: `${baseUrl}/payment/success?order_id=${orderId}`,
+          error_url:   `${baseUrl}/payment/error?order_id=${orderId}`,
+          cancel_url:  `${baseUrl}/payment/cancel?order_id=${orderId}`,
+        });
+        setSePayFormData({
+          checkoutURL: checkoutRes.checkout_url,
+          fields:      checkoutRes.fields,
+        });
+        setTimeout(() => sePayFormRef.current?.submit(), 100);
       } else {
         toast.success('Đặt hàng thành công!');
         navigate(`/orders/${orderId}`);
@@ -126,9 +192,8 @@ const CheckoutPage = () => {
   };
 
   const paymentMethods = [
-    { value: 'cod',    label: 'Thanh toán khi nhận hàng (COD)', icon: '💵', desc: 'Trả tiền mặt khi nhận hàng' },
-    { value: 'vietqr', label: 'VietQR - Chuyển khoản ngân hàng', icon: '🏦', desc: 'Quét QR bằng app bất kỳ ngân hàng', badge: 'Phổ biến' },
-    { value: 'momo',   label: 'Ví MoMo', icon: '💜', desc: 'Thanh toán qua ứng dụng MoMo' },
+    { value: 'cod',   label: 'Thanh toán khi nhận hàng (COD)', icon: '💵', desc: 'Trả tiền mặt khi nhận hàng' },
+    { value: 'sepay', label: 'SePay - Chuyển khoản ngân hàng', icon: '🏦', desc: 'Thanh toán qua cổng SePay (ATM/QR/Internet Banking)', badge: 'Phổ biến' },
   ];
 
   return (
@@ -180,8 +245,11 @@ const CheckoutPage = () => {
                     )}
                   </div>
 
-                  {/* Tỉnh / Phường — API v2 (2 cấp) */}
-                  <AddressFormFields onAddressChange={setShippingAddressString} />
+                  {/* Tỉnh / Phường — API GHN (3 cấp) */}
+                  <AddressFormFields 
+                    onAddressChange={setShippingAddressString} 
+                    onLocationSelect={handleLocationSelect}
+                  />
 
                   {/* Số nhà / Tên đường (chi tiết hơn) */}
                   <div className="form-group">
@@ -226,10 +294,10 @@ const CheckoutPage = () => {
                   ))}
                 </div>
 
-                {paymentMethod === 'vietqr' && (
+                {paymentMethod === 'sepay' && (
                   <div className="vietqr-info-box">
                     <i className="bi bi-info-circle-fill" style={{ flexShrink: 0, color: '#0ea5e9', fontSize: 16 }} />
-                    <p>Sau khi đặt hàng, mã QR sẽ hiện lên để bạn quét thanh toán ngay bằng ứng dụng bất kỳ ngân hàng nội địa.</p>
+                    <p>Sau khi đặt hàng, bạn sẽ được chuyển sang trang SePay để thanh toán an toàn qua chuyển khoản ngân hàng / QR.</p>
                   </div>
                 )}
               </div>
@@ -315,7 +383,7 @@ const CheckoutPage = () => {
             <div className="checkout-summary">
               <h3 className="cart-summary__title">Đơn hàng</h3>
               <div className="checkout-items">
-                {cartItems.map((item) => (
+                {checkoutItemsToUse.map((item) => (
                   <div key={item.id} className="checkout-item">
                     <div className="checkout-item__img">
                       {item.variant?.product?.image ? (
@@ -343,9 +411,13 @@ const CheckoutPage = () => {
                 <div className="cart-summary__row">
                   <span>Phí vận chuyển</span>
                   <span>
-                    {shippingFee === 0
-                      ? <span style={{ color: 'var(--color-success)' }}>Miễn phí</span>
-                      : formatPrice(shippingFee)}
+                    {fetchingFee ? (
+                      <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Đang tính...</span>
+                    ) : shippingFee === 0 ? (
+                      <span style={{ color: 'var(--color-success)' }}>Miễn phí</span>
+                    ) : (
+                      formatPrice(shippingFee)
+                    )}
                   </span>
                 </div>
                 {voucher && (
@@ -364,17 +436,31 @@ const CheckoutPage = () => {
               <button
                 type="submit"
                 className="btn btn-primary btn-full btn-lg"
-                disabled={placing}
+                disabled={placing || fetchingFee}
               >
                 {placing
                   ? 'Đang xử lý...'
-                  : paymentMethod === 'vietqr'
-                    ? '🏦 Đặt hàng & Lấy mã QR'
+                  : paymentMethod === 'sepay'
+                    ? '🏦 Đặt hàng & Thanh toán SePay'
                     : 'Đặt hàng'}
               </button>
             </div>
           </div>
         </form>
+
+        {/* Hidden SePay auto-submit form */}
+        {sePayFormData && (
+          <form
+            ref={sePayFormRef}
+            action={sePayFormData.checkoutURL}
+            method="POST"
+            style={{ display: 'none' }}
+          >
+            {Object.keys(sePayFormData.fields).map((field) => (
+              <input key={field} type="hidden" name={field} value={sePayFormData.fields[field]} />
+            ))}
+          </form>
+        )}
       </div>
     </div>
   );

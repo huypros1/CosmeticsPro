@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { adminApi } from '../../api/adminApi';
+import { getImgUrl } from '../../utils/helpers';
 
 /** Trả về URL hiển thị ảnh: blob (file mới) hoặc ảnh từ server */
 const getImgSrc = (src) => {
   if (!src) return null;
   if (src.startsWith('blob:') || src.startsWith('http')) return src;
-  return `http://backend.test${src}`;
+  return getImgUrl(src);
 };
 
 const CategoryManagement = () => {
@@ -149,7 +150,7 @@ const CategoryManagement = () => {
                   <td>#{cat.id}</td>
                   <td>
                     {cat.image
-                      ? <img src={cat.image.startsWith('http') ? cat.image : `http://backend.test${cat.image}`} alt={cat.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
+                      ? <img src={getImgUrl(cat.image)} alt={cat.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
                       : <div style={{ width: 48, height: 48, background: 'var(--color-gray-100)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <i className="bi bi-folder2" style={{ fontSize: 22, color: 'var(--color-text-muted)' }} />
                         </div>

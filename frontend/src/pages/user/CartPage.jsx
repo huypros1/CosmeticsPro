@@ -14,6 +14,15 @@ const CartPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const [updating, setUpdating] = useState(null);
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
+  const [hasInitSelection, setHasInitSelection] = useState(false);
+
+  useEffect(() => {
+    if (!cartLoading && cartItems.length > 0 && !hasInitSelection) {
+      setSelectedItemIds(cartItems.map(i => i.id));
+      setHasInitSelection(true);
+    }
+  }, [cartItems, cartLoading, hasInitSelection]);
 
   useEffect(() => {
     if (user) fetchCart();
@@ -46,8 +55,9 @@ const CartPage = () => {
     );
   }
 
-  const subtotal = cartItems.reduce((s, item) => s + (item.price * item.quantity), 0);
-  const shipping = subtotal > 500000 ? 0 : 30000;
+  const selectedItems = cartItems.filter(item => selectedItemIds.includes(item.id));
+  const subtotal = selectedItems.reduce((s, item) => s + (item.price * item.quantity), 0);
+  const shipping = subtotal > 500000 || selectedItems.length === 0 ? 0 : 30000;
   const total = subtotal + shipping;
 
   return (
@@ -71,7 +81,18 @@ const CartPage = () => {
             {/* Items */}
             <div className="cart-items">
               <div className="cart-items__header">
-                <span>Sản phẩm</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedItemIds.length === cartItems.length && cartItems.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedItemIds(cartItems.map(i => i.id));
+                      else setSelectedItemIds([]);
+                    }}
+                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--color-accent)' }}
+                  />
+                  Sản phẩm
+                </span>
                 <span>Đơn giá</span>
                 <span>Số lượng</span>
                 <span>Tổng</span>
@@ -79,7 +100,16 @@ const CartPage = () => {
               </div>
               {cartItems.map((item) => (
                 <div key={item.id} className="cart-item">
-                  <div className="cart-item__product">
+                  <div className="cart-item__product" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <input 
+                      type="checkbox"
+                      checked={selectedItemIds.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedItemIds([...selectedItemIds, item.id]);
+                        else setSelectedItemIds(selectedItemIds.filter(id => id !== item.id));
+                      }}
+                      style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--color-accent)', flexShrink: 0 }}
+                    />
                     <div className="cart-item__img">
                       {item.variant?.product?.image ? (
                         <img src={item.variant.product.image} alt={item.variant?.product?.name} />
@@ -139,7 +169,16 @@ const CartPage = () => {
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>
-              <button className="btn btn-primary btn-full btn-lg" onClick={() => navigate('/checkout')}>
+              <button 
+                className="btn btn-primary btn-full btn-lg" 
+                onClick={() => {
+                  if (selectedItemIds.length === 0) {
+                    toast.warning('Vui lòng chọn ít nhất 1 sản phẩm');
+                    return;
+                  }
+                  navigate('/checkout', { state: { items: selectedItems } });
+                }}
+              >
                 Tiến hành thanh toán
               </button>
               <Link to="/products" className="btn btn-ghost btn-full" style={{ marginTop: 8, textAlign: 'center' }}>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { postApi } from '../../api/postApi';
 
 const formatDate = (d) =>
@@ -37,10 +38,21 @@ const BlogDetailPage = () => {
 
   return (
     <div className="blog-detail-page">
+      <Helmet>
+        <title>{post.title} | HQCosmetic Blog</title>
+        <meta name="description" content={post.excerpt || `Đọc bài viết ${post.title} trên HQCosmetic`} />
+        <meta property="og:title" content={post.title} />
+        <meta property="og:description" content={post.excerpt || `Đọc bài viết ${post.title} trên HQCosmetic`} />
+        {post.thumbnail && (
+          <meta property="og:image" content={post.thumbnail.startsWith('http') ? post.thumbnail : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${post.thumbnail}`} />
+        )}
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
       {/* Hero Image */}
       {post.thumbnail && (
         <div className="blog-detail__hero-img">
-          <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
+          <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
         </div>
       )}
 
@@ -61,7 +73,7 @@ const BlogDetailPage = () => {
             </div>
             <h1 className="blog-detail__title">{post.title}</h1>
             {post.image && (
-              <img src={post.image.startsWith('http') ? post.image : `http://backend.test${post.image}`} alt={post.title} className="blog-detail__main-img" onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
+              <img src={post.image.startsWith('http') ? post.image : `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${post.image}`} alt={post.title} className="blog-detail__main-img" onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
             )}
             <div
               className="blog-detail__content"

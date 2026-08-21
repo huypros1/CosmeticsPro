@@ -18,33 +18,30 @@
 ## ✨ Tính năng nổi bật
 
 ### 🛍️ Người dùng
-- **Trang chủ hiện đại:** Các section chuyên biệt như Sản phẩm mới, Sản phẩm Flash Sale, Banner CTA, Đánh giá khách hàng tự động xoay (carousel), và Bản đồ cửa hàng (Google Maps).
-- **Duyệt sản phẩm:** Tìm kiếm, lọc theo danh mục, thương hiệu, đánh giá sao.
-- **Chi tiết sản phẩm toàn diện:** Quản lý biến thể (dung tích), gợi ý **Sản phẩm liên quan** (You may also like) và **Gợi ý mua theo bộ** (Complete the look).
-- **Quản lý Hồ sơ cá nhân (Profile):** Cập nhật thông tin, thay đổi mật khẩu, **đổi ảnh đại diện (avatar)** dễ dàng bằng thao tác click.
+- **Trang chủ hiện đại:** Các section chuyên biệt như Sản phẩm mới, Flash Sale, Banner CTA, **Đánh giá khách hàng thực tế (lấy tự động từ hệ thống)**, và Bản đồ cửa hàng (Google Maps).
+- **Duyệt & Tìm kiếm:** Thanh tìm kiếm thông minh **Live Search tự động gợi ý (tối đa 4 sản phẩm)**, lọc theo danh mục, thương hiệu, đánh giá sao.
+- **Chi tiết sản phẩm toàn diện:** Quản lý biến thể (dung tích), gợi ý **Sản phẩm liên quan** và **Gợi ý mua theo bộ**.
+- **Quản lý Hồ sơ cá nhân (Profile):** Cập nhật thông tin, **đổi ảnh đại diện (avatar)** dễ dàng.
+- **Lịch sử & Theo dõi Đơn hàng:** Xem chi tiết đơn, trạng thái, **lọc đơn hàng theo tab trạng thái**, hiển thị **ảnh thumbnail sản phẩm** ngay ngoài danh sách, tự động sắp xếp mới nhất.
 - **Giỏ hàng & Danh sách yêu thích:** Lưu trữ và quản lý mua sắm tiện lợi.
-- **Thanh toán:** Hỗ trợ **COD** và **VietQR (Chuyển khoản ngân hàng)**.
-- **Lịch sử đơn hàng:** Theo dõi tình trạng, huỷ đơn.
 - **Blog:** Xem danh sách bài viết chia sẻ bí quyết làm đẹp, tin tức.
 
 ### ✉️ Email Đặt hàng tự động
 - Gửi email xác nhận với giao diện HTML/CSS bắt mắt, sang trọng mỗi khi đặt hàng thành công.
 - Tuỳ biến dễ dàng với `App\Mail\OrderPlaced`.
 
-### 🏦 Thanh toán VietQR
-- Sau khi đặt hàng, khách được **redirect sang trang QR riêng** (nền tối, sang trọng).
-- Hiển thị **mã QR quét được bằng mọi app ngân hàng** nội địa Việt Nam.
-- **Tự động polling** mỗi 5 giây kiểm tra trạng thái thanh toán.
-- Khi Admin xác nhận → trang **tự động hiện thành công** + redirect đến đơn hàng.
+### 🏦 Thanh toán SePay (Tự động xác nhận)
+- Tích hợp cổng thanh toán **SePay** phiên bản Production (`pay.sepay.vn`).
+- Chuyển hướng người dùng sang giao diện thanh toán an toàn.
+- **Webhook IPN:** Tự động nhận kết quả từ ngân hàng và cập nhật trạng thái đơn hàng ngay lập tức không cần Admin duyệt tay.
 
 ### 🔧 Quản trị viên (Admin)
-- **Dashboard thống kê:** Giao diện trực quan với **Biểu đồ doanh thu 6 tháng**, hiển thị top sản phẩm bán chạy, và quản lý các đơn hàng gần nhất.
+- **Dashboard thống kê:** Giao diện trực quan với **Biểu đồ doanh thu 6 tháng**, top sản phẩm bán chạy, đơn hàng mới.
 - **Quản lý Sản phẩm:** Thêm/sửa/xoá sản phẩm và **các biến thể dung tích/giá**.
-- **Quản lý Đơn hàng:** Cập nhật trạng thái đơn hàng và thanh toán, **xác nhận thanh toán VietQR**.
-- **Quản lý Danh mục & Thương hiệu (Brands).**
-- **Quản lý Người dùng:** Phân quyền hệ thống, xem trạng thái người dùng.
-- **Quản lý Blog (Tin tức):** Viết bài mới, tải lên ảnh thumbnail.
-- **Quản lý Đánh giá (Reviews):** Xem và xoá các đánh giá vi phạm từ khách hàng.
+- **Quản lý Đơn hàng:** Cập nhật trạng thái đơn hàng và thanh toán, xem **chi tiết đơn hàng (Modal)**.
+- **Quản lý Danh mục & Thương hiệu.**
+- **Quản lý Blog (Tin tức):** Viết bài mới với trình soạn thảo cao cấp **TinyMCE** (thay thế CKEditor), hỗ trợ chèn ảnh, bảng biểu, định dạng phong phú.
+- **Quản lý Đánh giá (Reviews):** Xem, phản hồi và xoá các đánh giá vi phạm từ khách hàng.
 
 ---
 
@@ -183,6 +180,10 @@ MAIL_USERNAME="youremail@gmail.com"  # Email của bạn
 MAIL_PASSWORD="xxyyzzkkmmnnaabb"     # Mật khẩu ứng dụng 16 số của Google (App Password)
 MAIL_FROM_ADDRESS="youremail@gmail.com"
 MAIL_FROM_NAME="${APP_NAME}"
+
+# --- CẤU HÌNH SEPAY ---
+SEPAY_WEBHOOK_TOKEN=your_webhook_token_here
+SEPAY_ENV=production
 ```
 
 #### 2.4. Khởi tạo Storage (cho Avatar & Ảnh bài viết)
@@ -206,17 +207,13 @@ php artisan migrate:fresh --seed
 
 > Lệnh `--seed` sẽ tự động tạo **15 sản phẩm mẫu**, **8 thương hiệu**, **5 danh mục**, tài khoản admin và user mẫu.
 
-#### 2.7. Cấu hình VietQR (Thanh toán chuyển khoản)
+#### 2.7. Cấu hình Thanh toán SePay
 
-Mở file `backend/app/Http/Controllers/PaymentController.php` và thay thông tin ngân hàng của bạn:
+Mở file `backend/.env` và thêm API Token Webhook của SePay để xác thực các giao dịch đến:
 
-```php
-private $bankConfig = [
-    'bank_bin'       => '970422',          // 970436=VCB | 970415=VietinBank | 970418=BIDV | 970422=MBBank
-    'account_number' => 'SO_TAI_KHOAN',   // ← Số tài khoản thật của bạn
-    'account_name'   => 'TEN_CHU_TK',     // ← Tên chủ TK (VIET HOA KHONG DAU)
-    'bank_name'      => 'MBBank',
-];
+```env
+SEPAY_WEBHOOK_TOKEN=your_token
+SEPAY_ENV=production
 ```
 
 #### 2.8. Khởi động Backend
@@ -238,11 +235,12 @@ cd frontend
 npm install
 ```
 
-#### 3.1. Tạo file `.env`
+#### 3.1. Tạo file `.env` & `.env.production`
 
 ```env
 VITE_APP_NAME=HQCosmetic
 VITE_API_URL=http://localhost:8000/api
+VITE_TINYMCE_API_KEY=your_tinymce_key
 ```
 
 #### 3.2. Khởi động Frontend
@@ -297,23 +295,24 @@ Base URL: `http://localhost:8000/api`
 
 ---
 
-## 💳 Luồng thanh toán VietQR
+## 💳 Luồng thanh toán SePay (Tự động)
 
 ```
-Khách chọn "VietQR" → Nhấn Đặt hàng
+Khách chọn thanh toán "Chuyển khoản (SePay)" → Nhấn Đặt hàng
         ↓
-Tự động gửi thư Xác nhận Đặt hàng → Chuyển hướng sang /payment/vietqr/{orderId}
+Hệ thống tạo Link Checkout → Chuyển hướng sang Cổng thanh toán SePay
         ↓
-Hiển thị mã QR + thông tin chuyển khoản (polling kiểm tra mỗi 5 giây)
+Hiển thị mã QR ngân hàng trên hệ thống SePay
         ↓
-Khách mở app ngân hàng → Quét QR → Chuyển khoản
+Khách dùng App ngân hàng quét QR → Chuyển khoản thành công
         ↓
-Admin: Quản lý Đơn hàng → "✅ Xác nhận đã nhận TT"
+Ngân hàng báo về SePay → SePay bắn Webhook (IPN) về `/api/payment/sepay/ipn`
         ↓
-Backend: payment_status = 'paid', status = 'confirmed'
+Backend kiểm tra Webhook Token → Cập nhật đơn hàng (status = processing, payment_status = paid)
         ↓
-Frontend polling phát hiện → Màn hình SUCCESS 🎉
-→ Tự redirect sang trang chi tiết đơn hàng
+SePay tự động redirect khách về lại Website `/checkout?sepay_success=true`
+        ↓
+Giao diện hiển thị Đặt hàng thành công! 🎉
 ```
 
 ---
@@ -333,7 +332,7 @@ Frontend polling phát hiện → Màn hình SUCCESS 🎉
 | `react-router-dom` v7 | Client-side routing |
 | `axios` | HTTP client với interceptor |
 | `react-hook-form` | Form handling |
-| `vietqr` | Tạo QR code thanh toán VietQR |
+| `@tinymce/tinymce-react` | Trình soạn thảo văn bản phong phú cho Blog |
 
 ---
 

@@ -2,19 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productApi } from '../../api/productApi';
 import { postApi } from '../../api/postApi';
+import { reviewApi } from '../../api/reviewApi';
+import { getImgUrl } from '../../utils/helpers';
 import ProductCard from '../../components/ProductCard';
 import StarRating from '../../components/StarRating';
 
 const formatDate = (date) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(date));
-
-// Testimonial data
-const testimonials = [
-  { name: 'Nguyễn Thị Lan', avatar: 'L', rating: 5, text: 'Sản phẩm chất lượng tuyệt vời! Da mình cải thiện rõ rệt chỉ sau 2 tuần sử dụng. Sẽ tiếp tục ủng hộ HQCosmetic!', product: 'Serum Vitamin C' },
-  { name: 'Trần Minh Hoa', avatar: 'H', rating: 5, text: 'Giao hàng nhanh, đóng gói cẩn thận. Kem dưỡng ẩm thật sự tuyệt, mình đã mua lần thứ 3 rồi đó!', product: 'Kem dưỡng ẩm' },
-  { name: 'Lê Thu Hương', avatar: 'H', rating: 5, text: 'Hàng chính hãng, giá cả hợp lý. Tư vấn viên nhiệt tình, hỗ trợ rất tốt. Highly recommend!', product: 'Set dưỡng da' },
-  { name: 'Phạm Bảo Ngọc', avatar: 'N', rating: 5, text: 'Mình đã thử nhiều shop nhưng chỉ tin tưởng HQCosmetic vì hàng luôn authentic và dịch vụ tốt.', product: 'Toner Cân bằng' },
-];
 
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -22,19 +16,20 @@ const HomePage = () => {
   const [onSaleProducts, setOnSaleProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setProductsLoading(true);
-        const [prodData, newData, saleData, catData, postData] = await Promise.allSettled([
+        const [prodData, newData, saleData, catData, postData, reviewData] = await Promise.allSettled([
           productApi.getFeaturedProducts(),
           productApi.getNewArrivals(),
           productApi.getOnSale(),
           productApi.getCategories(),
           postApi.getPosts({ per_page: 3 }),
+          reviewApi.getRecentReviews(),
         ]);
         if (prodData.status === 'fulfilled') {
           const val = prodData.value;
@@ -56,19 +51,15 @@ const HomePage = () => {
           const val = postData.value;
           setPosts(val.data || val || []);
         }
+        if (reviewData.status === 'fulfilled') {
+          const val = reviewData.value;
+          setReviews(val.data || val || []);
+        }
       } finally {
         setProductsLoading(false);
       }
     };
     fetchData();
-  }, []);
-
-  // Auto-rotate testimonials
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonial(prev => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(timer);
   }, []);
 
   const ProductSkeleton = () => (
@@ -118,7 +109,7 @@ const HomePage = () => {
           </h1>
 
           <p className="hero-ed__desc">
-            Hơn 50 thương hiệu quốc tế — được kiểm định và phân phối chính hãng tại Việt Nam.
+            True beauty starts with taking care of yourself.
           </p>
 
           <div className="hero-ed__actions">
@@ -143,27 +134,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ── Cam kết (Features) ── */}
-      <section className="features-bar">
-        <div className="container">
-          <div className="features-bar__grid">
-            {[
-              { icon: '🚚', title: 'Miễn phí vận chuyển', desc: 'Đơn hàng từ 500.000đ' },
-              { icon: '✦', title: 'Hàng chính hãng', desc: 'Cam kết 100% authentic' },
-              { icon: '↩', title: 'Đổi trả dễ dàng', desc: 'Trong vòng 30 ngày' },
-              { icon: '💬', title: 'Hỗ trợ 24/7', desc: 'Tư vấn chuyên gia' },
-            ].map((f) => (
-              <div key={f.title} className="features-bar__item">
-                <span className="features-bar__icon">{f.icon}</span>
-                <div>
-                  <p className="features-bar__title">{f.title}</p>
-                  <p className="features-bar__desc">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── Categories ── */}
       {categories.length > 0 && (
@@ -181,7 +151,7 @@ const HomePage = () => {
                 <Link key={cat.id} to={`/products?category=${cat.slug}`} className="category-card">
                   <div className="category-card__img">
                     {cat.image ? (
-                      <img src={cat.image.startsWith('http') ? cat.image : `http://backend.test${cat.image}`} alt={cat.name} onError={(e) => { e.target.onerror = null; e.target.src = '/default-product.png'; }} />
+                      <img src={getImgUrl(cat.image)} alt={cat.name} onError={(e) => { e.target.onerror = null; e.target.src = '/default-product.png'; }} />
                     ) : (
                       <div className="category-card__placeholder">
                         <span>{cat.name?.charAt(0)}</span>
@@ -280,47 +250,69 @@ const HomePage = () => {
       </section>
 
       {/* ── Đánh giá khách hàng ── */}
-      <section className="section section--testimonials">
-        <div className="container">
-          <div className="section-header" style={{ marginBottom: 40 }}>
-            <div>
-              <p className="text-label" style={{ marginBottom: 8 }}>Khách hàng nói gì</p>
-              <h2 className="text-heading-lg">Đánh giá từ khách hàng</h2>
+      {reviews.length > 0 && (
+        <section className="section section--testimonials">
+          <div className="container">
+            <div className="section-header" style={{ marginBottom: 40 }}>
+              <div>
+                <p className="text-label" style={{ marginBottom: 8 }}>Khách hàng nói gì</p>
+                <h2 className="text-heading-lg">Đánh giá thực tế từ người dùng</h2>
+              </div>
             </div>
-          </div>
-          <div className="testimonials-grid">
-            {testimonials.map((t, i) => (
-              <div key={i} className={`testimonial-card${i === activeTestimonial ? ' testimonial-card--active' : ''}`}>
-                <div className="testimonial-card__stars">
-                  <StarRating rating={t.rating} size={16} />
-                </div>
-                <p className="testimonial-card__text">"{t.text}"</p>
-                <div className="testimonial-card__author">
-                  <div className="testimonial-card__avatar">{t.avatar}</div>
-                  <div>
-                    <p className="testimonial-card__name">{t.name}</p>
-                    <p className="testimonial-card__product">Đã mua: {t.product}</p>
+            <div className="testimonials-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '24px',
+            }}>
+              {reviews.map((r) => (
+                <div key={r.id} style={{
+                  background: '#fff',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  border: '1px solid #f3f4f6',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {r.user?.avatar ? (
+                        <img src={getImgUrl(r.user.avatar)} alt={r.user.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 600 }}>
+                          {r.user?.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: '15px', margin: 0, color: '#111827' }}>{r.user?.name}</p>
+                        <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0' }}>{formatDate(r.created_at)}</p>
+                      </div>
+                    </div>
+                    <StarRating rating={r.rating} size={14} />
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6, color: '#4b5563', fontStyle: 'italic' }}>"{r.content}"</p>
+                  <div style={{
+                    marginTop: 'auto',
+                    paddingTop: '16px',
+                    borderTop: '1px solid #f3f4f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    {r.product?.image && (
+                      <img src={getImgUrl(r.product.image)} alt={r.product.name} style={{ width: 36, height: 36, borderRadius: '6px', objectFit: 'cover' }} />
+                    )}
+                    <Link to={`/products/${r.product?.slug}`} style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-primary)', textDecoration: 'none', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {r.product?.name}
+                    </Link>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          {/* Dots */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 28 }}>
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTestimonial(i)}
-                style={{
-                  width: i === activeTestimonial ? 24 : 8, height: 8, borderRadius: 4,
-                  background: i === activeTestimonial ? 'var(--color-accent)' : 'var(--color-border)',
-                  border: 'none', cursor: 'pointer', transition: 'all 0.3s',
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Blog ── */}
       {posts.length > 0 && (
@@ -338,7 +330,7 @@ const HomePage = () => {
                 <Link key={post.id} to={`/blog/${post.slug}`} className="blog-card">
                   <div className="blog-card__img">
                     {post.thumbnail ? (
-                      <img src={post.thumbnail.startsWith('http') ? post.thumbnail : `http://backend.test${post.thumbnail}`} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
+                      <img src={getImgUrl(post.thumbnail)} alt={post.title} onError={(e) => { e.target.onerror = null; e.target.src = '/default-blog.png'; }} />
                     ) : (
                       <div className="blog-card__img-placeholder" />
                     )}

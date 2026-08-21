@@ -31,9 +31,6 @@ const AdminLayout = () => {
       <aside className="admin-sidebar">
         {/* Logo */}
         <div className="admin-logo">
-          <div className="admin-logo-mark">
-            <i className="bi bi-gem" style={{ fontSize: 20, color: 'var(--admin-accent)' }} />
-          </div>
           <div>
             <span className="admin-logo-text">HQCosmetic</span>
             <span className="admin-logo-sub">Admin Panel</span>
@@ -49,7 +46,6 @@ const AdminLayout = () => {
               to={item.to}
               className={({ isActive }) => `admin-nav-link${isActive ? ' active' : ''}`}
             >
-              <i className={`bi ${item.icon} admin-nav-icon`} />
               {item.label}
             </NavLink>
           ))}
@@ -65,7 +61,7 @@ const AdminLayout = () => {
             </div>
           </div>
           <button className="admin-logout-btn" onClick={handleLogout} title="Đăng xuất">
-            <i className="bi bi-box-arrow-right" style={{ fontSize: 16 }} />
+            <span style={{ fontSize: 13, fontWeight: 500 }}>Đăng xuất</span>
           </button>
         </div>
       </aside>

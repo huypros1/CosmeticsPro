@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import StarRating from './StarRating';
+import { getImgUrl } from '../utils/helpers';
 
 const formatPrice = (price) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -64,7 +65,7 @@ const ProductCard = ({ product }) => {
       <div className="product-card__img-wrap">
         {product.image ? (
           <img
-            src={product.image.startsWith('http') ? product.image : `http://backend.test${product.image}`}
+            src={getImgUrl(product.image)}
             alt={product.name}
             className="product-card__img"
             loading="lazy"

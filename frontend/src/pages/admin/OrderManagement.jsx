@@ -33,6 +33,10 @@ const OrderManagement = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
+  
+  // Modal state
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -119,6 +123,18 @@ const OrderManagement = () => {
     return false;
   };
 
+  const openOrderDetails = async (id) => {
+    try {
+      setLoadingDetails(true);
+      const res = await adminApi.getOrder(id);
+      setSelectedOrder(res);
+    } catch (err) {
+      alert('Không thể tải chi tiết đơn hàng');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   return (
     <div className="management-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -174,6 +190,7 @@ const OrderManagement = () => {
               <th>Ngày đặt</th>
               <th style={{ minWidth: 180 }}>Trạng thái đơn</th>
               <th>Thao tác TT</th>
+              <th>Chi tiết</th>
             </tr>
           </thead>
           <tbody>
@@ -283,6 +300,15 @@ const OrderManagement = () => {
                         </button>
                       )}
                     </td>
+                    <td>
+                      <button 
+                        className="action-btn"
+                        onClick={() => openOrderDetails(order.id)}
+                        disabled={loadingDetails}
+                      >
+                        <i className="bi bi-eye"></i> Xem
+                      </button>
+                    </td>
                   </tr>
                 );
               })
@@ -297,6 +323,94 @@ const OrderManagement = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#fff', borderRadius: '12px', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
+              <h2 style={{ margin: 0, fontSize: '18px' }}>Chi tiết Đơn hàng #{selectedOrder.id}</h2>
+              <button onClick={() => setSelectedOrder(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6b7280' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+                  <h3 style={{ fontSize: '14px', marginBottom: '12px', color: '#374151' }}>Thông tin Khách hàng</h3>
+                  <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Tên KH:</strong> {selectedOrder.user?.name}</p>
+                  <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Email:</strong> {selectedOrder.user?.email}</p>
+                  <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>Người nhận:</strong> {selectedOrder.recipient_name}</p>
+                  <p style={{ margin: '4px 0', fontSize: '13px' }}><strong>SĐT:</strong> {selectedOrder.recipient_phone}</p>
+                </div>
+                <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+                  <h3 style={{ fontSize: '14px', marginBottom: '12px', color: '#374151' }}>Địa chỉ Giao hàng</h3>
+                  <p style={{ margin: '4px 0', fontSize: '13px' }}>{selectedOrder.shipping_address}</p>
+                  {selectedOrder.note && <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#b45309' }}><strong>Ghi chú:</strong> {selectedOrder.note}</p>}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '14px', marginBottom: '12px', color: '#374151' }}>Danh sách Sản phẩm</h3>
+                <table className="admin-table" style={{ width: '100%', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#f3f4f6' }}>
+                      <th style={{ padding: '8px' }}>Sản phẩm</th>
+                      <th style={{ padding: '8px' }}>Dung tích</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>Đơn giá</th>
+                      <th style={{ padding: '8px', textAlign: 'center' }}>SL</th>
+                      <th style={{ padding: '8px', textAlign: 'right' }}>Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.order_items?.map(item => (
+                      <tr key={item.id}>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb' }}>
+                          <div style={{ fontWeight: 600 }}>{item.variant?.product?.name}</div>
+                        </td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#6b7280' }}>
+                          {item.variant?.capacity?.value} {item.variant?.capacity?.unit}
+                        </td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right' }}>{formatPrice(item.price)}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>x{item.quantity}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right', fontWeight: 600 }}>{formatPrice(item.price * item.quantity)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <div style={{ width: '300px', background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                    <span>Tạm tính:</span>
+                    <span>{formatPrice(selectedOrder.total_amount - selectedOrder.shipping_fee + (selectedOrder.voucher ? selectedOrder.voucher.discount_amount : 0))}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                    <span>Phí vận chuyển:</span>
+                    <span>{formatPrice(selectedOrder.shipping_fee)}</span>
+                  </div>
+                  {selectedOrder.voucher && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: '#059669' }}>
+                      <span>Voucher giảm:</span>
+                      <span>-{formatPrice(selectedOrder.voucher.discount_amount)}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb', fontWeight: 700, fontSize: '15px' }}>
+                    <span>Tổng cộng:</span>
+                    <span style={{ color: '#ef4444' }}>{formatPrice(selectedOrder.total_amount)}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', background: '#f9fafb' }}>
+              <button onClick={() => setSelectedOrder(null)} className="action-btn" style={{ padding: '8px 16px', fontWeight: 600 }}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

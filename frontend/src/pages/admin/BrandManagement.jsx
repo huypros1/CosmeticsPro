@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { adminApi } from '../../api/adminApi';
-
-const BACKEND = 'http://backend.test';
+import { getImgUrl } from '../../utils/helpers';
 
 const BrandManagement = () => {
   const [brands, setBrands] = useState([]);
@@ -147,7 +146,7 @@ const BrandManagement = () => {
               }}>
                 {brand.logo ? (
                   <img
-                    src={BACKEND + brand.logo}
+                    src={getImgUrl(brand.logo)}
                     alt={brand.name}
                     style={{ maxWidth: '80%', maxHeight: '80px', objectFit: 'contain' }}
                     onError={e => { e.target.style.display = 'none'; }}

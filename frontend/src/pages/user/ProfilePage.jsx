@@ -5,6 +5,7 @@ import { profileApi } from '../../api/profileApi';
 import { wishlistApi } from '../../api/wishlistApi';
 import { orderApi } from '../../api/orderApi';
 import { cartApi } from '../../api/cartApi';
+import { getImgUrl } from '../../utils/helpers';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -112,6 +113,7 @@ const WishlistTab = () => {
 const OrdersTab = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
   const toast = useToast();
 
   useEffect(() => {
@@ -129,17 +131,49 @@ const OrdersTab = () => {
     </div>
   );
 
-  if (orders.length === 0) return (
-    <div className="empty-state" style={{ padding: '40px 0' }}>
-      <div className="empty-state__icon">📦</div>
-      <p className="empty-state__title">Chưa có đơn hàng nào</p>
-      <Link to="/products" className="btn btn-primary">Mua sắm ngay</Link>
-    </div>
-  );
+  const filteredOrders = filter === 'all' ? orders : orders.filter(o => o.status === filter);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {orders.map((order) => {
+      {/* ── Order Status Filter ── */}
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+        {[
+          { id: 'all', label: 'Tất cả' },
+          { id: 'pending', label: 'Chờ xử lý' },
+          { id: 'confirmed', label: 'Đã xác nhận' },
+          { id: 'processing', label: 'Đang chuẩn bị' },
+          { id: 'shipped', label: 'Đang giao' },
+          { id: 'delivered', label: 'Đã giao' },
+          { id: 'cancelled', label: 'Đã hủy' }
+        ].map(st => (
+          <button
+            key={st.id}
+            onClick={() => setFilter(st.id)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: filter === st.id ? 'none' : '1px solid #e5e7eb',
+              background: filter === st.id ? 'var(--color-primary)' : '#fff',
+              color: filter === st.id ? '#fff' : '#4b5563',
+              fontSize: '13px',
+              fontWeight: filter === st.id ? 600 : 500,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s'
+            }}
+          >
+            {st.label}
+          </button>
+        ))}
+      </div>
+
+      {filteredOrders.length === 0 && !loading ? (
+        <div className="empty-state" style={{ padding: '40px 0', border: '1px dashed #e5e7eb', borderRadius: 12 }}>
+          <div className="empty-state__icon">📦</div>
+          <p className="empty-state__title">Không có đơn hàng nào</p>
+        </div>
+      ) : (
+        filteredOrders.map((order) => {
         const st = statusMap[order.status] || { label: order.status, cls: 'badge-gray' };
         const items = order.items || order.order_items || [];
         return (
@@ -156,7 +190,7 @@ const OrdersTab = () => {
                 <div key={item.id} className="order-card__item">
                   <div className="order-card__item-img">
                     {item.variant?.product?.image
-                      ? <img src={item.variant.product.image} alt="" />
+                      ? <img src={getImgUrl(item.variant.product.image)} alt="" />
                       : <div style={{ width: '100%', height: '100%', background: 'var(--color-gray-100)' }} />
                     }
                   </div>
@@ -181,7 +215,7 @@ const OrdersTab = () => {
             </div>
           </div>
         );
-      })}
+      }))}
     </div>
   );
 };
@@ -270,7 +304,7 @@ const ProfilePage = () => {
                     <div style={{ width: 24, height: 24, border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                   </div>
                 ) : user?.avatar ? (
-                  <img src={user.avatar.startsWith('http') ? user.avatar : `http://backend.test${user.avatar}`} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getImgUrl(user.avatar)} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span>{user?.name?.charAt(0).toUpperCase()}</span>
                 )}

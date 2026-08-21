@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
@@ -38,7 +39,7 @@ import WishlistPage from './pages/user/WishlistPage';
 import BlogPage from './pages/user/BlogPage';
 import BlogDetailPage from './pages/user/BlogDetailPage';
 import ProfilePage from './pages/user/ProfilePage';
-import VietQRPaymentPage from './pages/user/VietQRPaymentPage';
+import SePayCallbackPage from './pages/user/SePayCallbackPage';
 import ContactPage from './pages/user/ContactPage';
 
 // Protected Route wrapper
@@ -99,7 +100,9 @@ const App = () => {
                 <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
                 <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-                <Route path="/payment/vietqr/:orderId" element={<ProtectedRoute><VietQRPaymentPage /></ProtectedRoute>} />
+                <Route path="/payment/success" element={<ProtectedRoute><SePayCallbackPage type="success" /></ProtectedRoute>} />
+                <Route path="/payment/error" element={<ProtectedRoute><SePayCallbackPage type="error" /></ProtectedRoute>} />
+                <Route path="/payment/cancel" element={<ProtectedRoute><SePayCallbackPage type="cancel" /></ProtectedRoute>} />
               </Route>
 
               {/* Admin */}
@@ -132,4 +135,10 @@ const App = () => {
   );
 };
 
-export default App;
+export default function AppWrapper() {
+  return (
+    <HelmetProvider>
+      <App />
+    </HelmetProvider>
+  );
+}

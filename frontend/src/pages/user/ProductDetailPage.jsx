@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productApi } from '../../api/productApi';
 import { cartApi } from '../../api/cartApi';
 import { reviewApi } from '../../api/reviewApi';
@@ -19,6 +19,7 @@ const formatDate = (d) =>
 
 const ProductDetailPage = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { fetchCart } = useCart();
   const toast = useToast();
@@ -104,6 +105,21 @@ const ProductDetailPage = () => {
     } finally {
       setAddingCart(false);
     }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) { toast.warning('Vui lòng đăng nhập để mua hàng'); return; }
+    if (!selectedVariant) return;
+    
+    const buyNowItem = {
+      id: 'temp-' + Date.now(),
+      variant_id: selectedVariant.id,
+      quantity: quantity,
+      price: selectedVariant.sale_price || selectedVariant.price,
+      variant: { ...selectedVariant, product: product }
+    };
+    
+    navigate('/checkout', { state: { items: [buyNowItem] } });
   };
 
   const handleWishlist = async () => {
@@ -358,12 +374,20 @@ const ProductDetailPage = () => {
             {/* Actions */}
             <div className="product-detail__actions">
               <button
-                className="btn btn-primary btn-lg"
-                style={{ flex: 1 }}
+                className="btn btn-outline btn-lg"
+                style={{ flex: 1, borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
                 onClick={handleAddToCart}
                 disabled={addingCart || !selectedVariant || selectedVariant.stock === 0}
               >
-                {addingCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
+                {addingCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
+              </button>
+              <button
+                className="btn btn-primary btn-lg"
+                style={{ flex: 1 }}
+                onClick={handleBuyNow}
+                disabled={!selectedVariant || selectedVariant.stock === 0}
+              >
+                Mua ngay
               </button>
               <button
                 className={`btn btn-outline btn-icon-xl${wishlisted ? ' btn-wishlisted' : ''}`}

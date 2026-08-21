@@ -1,6 +1,7 @@
 import axiosClient from './axiosClient';
 
 export const reviewApi = {
+  getRecentReviews: () => axiosClient.get('/reviews/recent'),
   getProductReviews: (productId, params) =>
     axiosClient.get(`/reviews/${productId}`, { params }),
   submitReview: (data) => axiosClient.post('/reviews', data),

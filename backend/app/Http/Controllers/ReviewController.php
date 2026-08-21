@@ -10,6 +10,17 @@ use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
+    public function recent()
+    {
+        $reviews = Review::with(['user', 'product'])
+            ->whereNotNull('content')
+            ->latest()
+            ->take(8)
+            ->get();
+
+        return response()->json($reviews);
+    }
+
     public function index($productId)
     {
         $reviews = Review::with('user')

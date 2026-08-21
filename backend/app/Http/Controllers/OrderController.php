@@ -14,9 +14,12 @@ use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::all();
+        $orders = Order::with(['order_items.variant.product'])
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->get();
 
         return response()->json([
             'data' => $orders
@@ -39,6 +42,7 @@ class OrderController extends Controller
             'recipient_phone'   => 'required|string|max:20',
             'shipping_address'  => 'required|string|max:500',
             'payment_method'    => 'required|string',
+            'shipping_fee'      => 'nullable|numeric|min:0',
             'items'             => 'required|array|min:1',
             'items.*.variant_id' => 'required|exists:product_variants,id',
             'items.*.quantity'  => 'required|integer|min:1',
@@ -58,7 +62,10 @@ class OrderController extends Controller
             }
 
             // ─── Tính shipping fee ─────────────────────────────────────────────
-            $shippingFee = $itemsTotal >= 500000 ? 0 : 30000;
+            $shippingFee = $request->has('shipping_fee') ? (float) $request->shipping_fee : 30000;
+            if ($itemsTotal >= 500000) {
+                $shippingFee = 0; // Vẫn giữ policy miễn ship cho đơn >= 500k
+            }
 
             // ─── Tính discount từ voucher (server-side, không tin client) ──────
             $discountAmount = 0;
@@ -138,9 +145,11 @@ class OrderController extends Controller
                 }
             }
 
-            // Clear cart
-            Cart::where('user_id', $request->user()->id)->delete();
-
+            // Clear ONLY purchased items from cart
+            $purchasedVariantIds = collect($request->items)->pluck('variant_id');
+            Cart::where('user_id', $request->user()->id)
+                ->whereIn('variant_id', $purchasedVariantIds)
+                ->delete();
             DB::commit();
 
             // Simulate VNPay / MoMo success url directly for testing purposes

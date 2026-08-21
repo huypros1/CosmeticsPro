@@ -4,6 +4,7 @@ import './styles/main.css';
 import './styles/layouts.css';
 import './styles/components.css';
 import './styles/pages.css';
+import './styles/blog.css';
 import './styles/admin.css';
 import App from './App.jsx';
 
